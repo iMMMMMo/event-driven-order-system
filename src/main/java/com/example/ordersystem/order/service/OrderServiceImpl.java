@@ -28,4 +28,11 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
     }
+
+    @Override
+    public Order markAsPaid(UUID id) {
+        Order order = getOrder(id);
+        order.markAsPaid();
+        return order;
+    }
 }

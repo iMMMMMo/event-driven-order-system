@@ -10,4 +10,6 @@ public interface OrderService {
     Order createOrder(String email, BigDecimal amount);
 
     Order getOrder(UUID id);
+
+    Order markAsPaid(UUID id);
 }
