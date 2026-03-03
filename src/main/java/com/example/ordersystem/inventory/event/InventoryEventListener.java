@@ -14,6 +14,6 @@ public class InventoryEventListener {
 
     @EventListener
     public void handlePaymentSuccess(PaymentSucceededEvent event) {
-        inventoryService.reserveForOrder();
+        inventoryService.reserveForOrder(event.getOrderId());
     }
 }
