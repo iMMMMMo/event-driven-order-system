@@ -1,5 +1,6 @@
 package com.example.ordersystem.order.service;
 
+import com.example.ordersystem.order.controller.dto.OrderResponse;
 import com.example.ordersystem.order.domain.Order;
 
 import java.math.BigDecimal;
@@ -7,9 +8,9 @@ import java.util.UUID;
 
 public interface OrderService {
 
-    Order createOrder(String email, BigDecimal amount);
+    OrderResponse createOrder(String email, BigDecimal amount);
 
-    Order getOrder(UUID id);
+    OrderResponse getOrder(UUID id);
 
-    Order markAsPaid(UUID id);
+    OrderResponse markAsPaid(UUID id);
 }

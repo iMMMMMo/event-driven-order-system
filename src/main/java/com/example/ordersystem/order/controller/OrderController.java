@@ -2,8 +2,6 @@ package com.example.ordersystem.order.controller;
 
 import com.example.ordersystem.order.controller.dto.CreateOrderRequest;
 import com.example.ordersystem.order.controller.dto.OrderResponse;
-import com.example.ordersystem.order.domain.Order;
-import com.example.ordersystem.order.mapper.OrderMapper;
 import com.example.ordersystem.order.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,31 +17,28 @@ import java.util.UUID;
 public class OrderController {
 
     private final OrderService orderService;
-    private final OrderMapper orderMapper;
 
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
             @Valid @RequestBody CreateOrderRequest request) {
 
-        Order order = orderService.createOrder(
+        OrderResponse response = orderService.createOrder(
                 request.customerEmail(),
                 request.totalAmount()
         );
 
         return ResponseEntity
-                .created(URI.create("/api/orders/" + order.getId()))
-                .body(orderMapper.toResponse(order));
+                .created(URI.create("/api/orders/" + response.id()))
+                .body(response);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<OrderResponse> getOrder(@PathVariable UUID id) {
-        Order order = orderService.getOrder(id);
-        return ResponseEntity.ok(orderMapper.toResponse(order));
+        return ResponseEntity.ok(orderService.getOrder(id));
     }
 
     @PatchMapping("/{id}/pay")
     public ResponseEntity<OrderResponse> markAsPaid(@PathVariable UUID id) {
-        Order order = orderService.markAsPaid(id);
-        return ResponseEntity.ok(orderMapper.toResponse(order));
+        return ResponseEntity.ok(orderService.markAsPaid(id));
     }
 }

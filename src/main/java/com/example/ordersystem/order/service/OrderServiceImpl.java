@@ -1,13 +1,17 @@
 package com.example.ordersystem.order.service;
 
+import com.example.ordersystem.order.controller.dto.OrderResponse;
 import com.example.ordersystem.order.domain.Order;
 import com.example.ordersystem.order.event.OrderCreatedEvent;
 import com.example.ordersystem.order.event.OrderPaidEvent;
+import com.example.ordersystem.order.mapper.OrderMapper;
 import com.example.ordersystem.order.repository.OrderRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -18,10 +22,11 @@ import java.util.UUID;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderMapper orderMapper;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
-    public Order createOrder(String email, BigDecimal amount) {
+    public OrderResponse createOrder(String email, BigDecimal amount) {
         Order order = Order.create(email, amount);
         Order saved = orderRepository.save(order);
 
@@ -33,25 +38,32 @@ public class OrderServiceImpl implements OrderService {
                 )
         );
 
-        return saved;
+        return orderMapper.toResponse(saved);
     }
 
     @Override
+    @Cacheable(value = "orders", key = "#id")
     @Transactional(Transactional.TxType.SUPPORTS)
-    public Order getOrder(UUID id) {
-        return orderRepository.findById(id)
+    public OrderResponse getOrder(UUID id) {
+        Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
+        return orderMapper.toResponse(order);
     }
 
     @Override
-    public Order markAsPaid(UUID id) {
-        Order order = getOrder(id);
+    @CacheEvict(value = "orders", key = "#id")
+    public OrderResponse markAsPaid(UUID id) {
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
         order.markAsPaid();
 
         eventPublisher.publishEvent(
                 new OrderPaidEvent(order.getId())
         );
 
-        return order;
+        return orderMapper.toResponse(order);
     }
 }
