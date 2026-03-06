@@ -20,10 +20,11 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
-            @Valid @RequestBody CreateOrderRequest request) {
+            @Valid @RequestBody CreateOrderRequest request,
+            java.security.Principal principal) {
 
         OrderResponse response = orderService.createOrder(
-                request.customerEmail(),
+                principal.getName(),
                 request.totalAmount()
         );
 

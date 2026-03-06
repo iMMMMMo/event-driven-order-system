@@ -8,12 +8,16 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "orders")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order extends BaseEntity {
+
+    @Column(nullable = false)
+    private UUID userId;
 
     @Column(nullable = false)
     private String customerEmail;
@@ -31,15 +35,16 @@ public class Order extends BaseEntity {
     @Version
     private Long version;
 
-    private Order(String customerEmail, BigDecimal totalAmount) {
+    private Order(UUID userId, String customerEmail, BigDecimal totalAmount) {
+        this.userId = userId;
         this.customerEmail = customerEmail;
         this.totalAmount = totalAmount;
         this.status = OrderStatus.CREATED;
         this.createdAt = Instant.now();
     }
 
-    public static Order create(String customerEmail, BigDecimal totalAmount) {
-        return new Order(customerEmail, totalAmount);
+    public static Order create(UUID userId, String customerEmail, BigDecimal totalAmount) {
+        return new Order(userId, customerEmail, totalAmount);
     }
 
     public void markAsPaid() {
