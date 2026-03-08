@@ -1,13 +1,14 @@
-package com.example.ordersystem.payment.event;
+package com.example.ordersystem.order.event;
 
 import com.example.ordersystem.shared.event.AbstractDomainEvent;
+
 import java.util.UUID;
 
-public class PaymentSucceededEvent extends AbstractDomainEvent {
-    
+public class OrderCancelledEvent extends AbstractDomainEvent {
+
     private final UUID orderId;
 
-    public PaymentSucceededEvent(UUID orderId) {
+    public OrderCancelledEvent(UUID orderId) {
         this.orderId = orderId;
     }
 

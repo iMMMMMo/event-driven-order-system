@@ -1,6 +1,6 @@
 package com.example.ordersystem.payment.event;
 
-import com.example.ordersystem.order.event.OrderCreatedEvent;
+import com.example.ordersystem.order.event.OrderPaymentRequestedEvent;
 import com.example.ordersystem.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
@@ -15,13 +15,12 @@ public class PaymentEventListener {
     private final PaymentService paymentService;
 
     @EventListener
-    public void handleOrderCreated(OrderCreatedEvent event) {
-
-        String idempotencyKey = "payment-" + event.getOrderId();
+    public void handlePaymentRequested(OrderPaymentRequestedEvent event) {
 
         paymentService.processPayment(
                 event.getOrderId(),
-                idempotencyKey
+                event.getAmount(),
+                event.getExpectedAmount()
         );
     }
 }

@@ -55,15 +55,15 @@ public class Order extends BaseEntity {
     }
 
     public void cancel() {
-        if (this.status == OrderStatus.COMPLETED) {
-            throw new IllegalStateException("Completed order cannot be cancelled");
+        if (this.status != OrderStatus.CREATED) {
+            throw new IllegalStateException("Only CREATED orders can be marked as CANCELLED");
         }
         this.status = OrderStatus.CANCELLED;
     }
 
     public void complete() {
         if (this.status != OrderStatus.PAID) {
-            throw new IllegalStateException("Only PAID orders can be completed");
+            throw new IllegalStateException("Only PAID orders can be COMPLETED");
         }
         this.status = OrderStatus.COMPLETED;
     }

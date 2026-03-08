@@ -2,8 +2,10 @@ package com.example.ordersystem.order.service;
 
 import com.example.ordersystem.order.controller.dto.OrderResponse;
 import com.example.ordersystem.order.domain.Order;
+import com.example.ordersystem.order.event.OrderCancelledEvent;
 import com.example.ordersystem.order.event.OrderCreatedEvent;
 import com.example.ordersystem.order.event.OrderPaidEvent;
+import com.example.ordersystem.order.event.OrderPaymentRequestedEvent;
 import com.example.ordersystem.order.mapper.OrderMapper;
 import com.example.ordersystem.order.repository.OrderRepository;
 import com.example.ordersystem.user.domain.User;
@@ -59,6 +61,23 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public OrderResponse pay(UUID id, BigDecimal amount) {
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
+        eventPublisher.publishEvent(
+                new OrderPaymentRequestedEvent(
+                        order.getId(),
+                        amount,
+                        order.getTotalAmount()
+                )
+        );
+
+        return orderMapper.toResponse(order);
+    }
+
+    @Override
     @CacheEvict(value = "orders", key = "#id")
     public OrderResponse markAsPaid(UUID id) {
 
@@ -69,6 +88,20 @@ public class OrderServiceImpl implements OrderService {
 
         eventPublisher.publishEvent(
                 new OrderPaidEvent(order.getId())
+        );
+
+        return orderMapper.toResponse(order);
+    }
+
+    @Override
+    public OrderResponse cancelOrder(UUID id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
+        order.cancel();
+
+        eventPublisher.publishEvent(
+                new OrderCancelledEvent(order.getId())
         );
 
         return orderMapper.toResponse(order);

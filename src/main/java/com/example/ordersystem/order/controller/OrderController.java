@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.util.UUID;
 
@@ -39,7 +40,10 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}/pay")
-    public ResponseEntity<OrderResponse> markAsPaid(@PathVariable UUID id) {
-        return ResponseEntity.ok(orderService.markAsPaid(id));
+    public ResponseEntity<OrderResponse> pay(
+            @PathVariable UUID id,
+            @RequestParam BigDecimal amount) {
+
+        return ResponseEntity.ok(orderService.pay(id, amount));
     }
 }

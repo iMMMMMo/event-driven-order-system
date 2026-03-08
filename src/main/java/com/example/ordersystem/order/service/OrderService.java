@@ -12,5 +12,9 @@ public interface OrderService {
 
     OrderResponse getOrder(UUID id);
 
+    OrderResponse pay(UUID id, BigDecimal amount);
+
     OrderResponse markAsPaid(UUID id);
+
+    OrderResponse cancelOrder(UUID id);
 }
