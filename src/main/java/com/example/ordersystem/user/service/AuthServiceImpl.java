@@ -7,9 +7,14 @@ import com.example.ordersystem.user.controller.dto.*;
 import com.example.ordersystem.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +28,7 @@ public class AuthServiceImpl implements AuthService {
     public UserResponse register(CreateUserRequest request) {
 
         if (repository.findByEmail(request.email()).isPresent()) {
-            throw new RuntimeException("Email already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
         }
 
         User user = User.builder()
@@ -41,10 +46,10 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginUserRequest request) {
 
         User user = repository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new BadCredentialsException("Invalid credentials");
         }
 
         return new AuthResponse(jwtService.generateToken(user));
@@ -53,10 +58,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserResponse getCurrentUser() {
 
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        String email = getAuthenticatedEmail();
 
         User user = repository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         return new UserResponse(user.getEmail(), user.getRole());
     }
@@ -64,11 +69,26 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse getCurrentToken() {
 
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        String email = getAuthenticatedEmail();
 
         User user = repository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         return new AuthResponse(jwtService.generateToken(user));
+    }
+
+    private String getAuthenticatedEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new BadCredentialsException("Authentication required");
+        }
+
+        String email = authentication.getName();
+        if (email == null || email.isBlank()) {
+            throw new BadCredentialsException("Invalid authentication context");
+        }
+
+        return email;
     }
 }
