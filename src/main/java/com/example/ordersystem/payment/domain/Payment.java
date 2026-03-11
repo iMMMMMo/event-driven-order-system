@@ -1,5 +1,6 @@
 package com.example.ordersystem.payment.domain;
 
+import com.example.ordersystem.shared.exception.ConflictException;
 import com.example.ordersystem.shared.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -40,14 +41,14 @@ public class Payment extends BaseEntity {
 
     public void markSuccess() {
         if (status != PaymentStatus.PENDING) {
-            throw new IllegalStateException("Payment already processed");
+            throw new ConflictException("Payment already processed");
         }
         this.status = PaymentStatus.SUCCESS;
     }
 
     public void markFailed() {
         if (status != PaymentStatus.PENDING) {
-            throw new IllegalStateException("Payment already processed");
+            throw new ConflictException("Payment already processed");
         }
         this.status = PaymentStatus.FAILED;
     }

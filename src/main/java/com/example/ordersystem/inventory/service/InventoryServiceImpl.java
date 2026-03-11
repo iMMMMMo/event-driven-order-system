@@ -3,6 +3,7 @@ package com.example.ordersystem.inventory.service;
 import com.example.ordersystem.inventory.domain.InventoryItem;
 import com.example.ordersystem.inventory.event.InventoryReservedEvent;
 import com.example.ordersystem.inventory.repository.InventoryRepository;
+import com.example.ordersystem.shared.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,7 +26,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         InventoryItem item = inventoryRepository
                 .findByProductName(DEFAULT_PRODUCT)
-                .orElseThrow(() -> new IllegalStateException("Inventory item not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Inventory item not found"));
 
         item.reserve(1);
 

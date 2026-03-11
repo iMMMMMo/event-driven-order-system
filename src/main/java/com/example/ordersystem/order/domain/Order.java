@@ -1,5 +1,6 @@
 package com.example.ordersystem.order.domain;
 
+import com.example.ordersystem.shared.exception.ConflictException;
 import com.example.ordersystem.shared.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -49,21 +50,21 @@ public class Order extends BaseEntity {
 
     public void markAsPaid() {
         if (this.status != OrderStatus.CREATED) {
-            throw new IllegalStateException("Only CREATED orders can be marked as PAID");
+            throw new ConflictException("Only CREATED orders can be marked as PAID");
         }
         this.status = OrderStatus.PAID;
     }
 
     public void cancel() {
         if (this.status != OrderStatus.CREATED) {
-            throw new IllegalStateException("Only CREATED orders can be marked as CANCELLED");
+            throw new ConflictException("Only CREATED orders can be marked as CANCELLED");
         }
         this.status = OrderStatus.CANCELLED;
     }
 
     public void complete() {
         if (this.status != OrderStatus.PAID) {
-            throw new IllegalStateException("Only PAID orders can be COMPLETED");
+            throw new ConflictException("Only PAID orders can be COMPLETED");
         }
         this.status = OrderStatus.COMPLETED;
     }

@@ -1,7 +1,6 @@
 package com.example.ordersystem.order.service;
 
 import com.example.ordersystem.order.controller.dto.OrderResponse;
-import com.example.ordersystem.order.domain.Order;
 
 import java.math.BigDecimal;
 import java.util.UUID;

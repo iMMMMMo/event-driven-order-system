@@ -8,6 +8,7 @@ import com.example.ordersystem.order.event.OrderPaidEvent;
 import com.example.ordersystem.order.event.OrderPaymentRequestedEvent;
 import com.example.ordersystem.order.mapper.OrderMapper;
 import com.example.ordersystem.order.repository.OrderRepository;
+import com.example.ordersystem.shared.exception.ResourceNotFoundException;
 import com.example.ordersystem.user.domain.User;
 import com.example.ordersystem.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -34,7 +35,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse createOrder(String email, BigDecimal amount) {
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Order order = Order.create(user.getId(), user.getEmail(), amount);
         Order saved = orderRepository.save(order);
@@ -54,8 +55,7 @@ public class OrderServiceImpl implements OrderService {
     @Cacheable(value = "orders", key = "#id")
     @Transactional(Transactional.TxType.SUPPORTS)
     public OrderResponse getOrder(UUID id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+                Order order = findOrder(id);
 
         return orderMapper.toResponse(order);
     }
@@ -63,8 +63,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponse pay(UUID id, BigDecimal amount) {
 
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        Order order = findOrder(id);
 
         eventPublisher.publishEvent(
                 new OrderPaymentRequestedEvent(
@@ -81,8 +80,7 @@ public class OrderServiceImpl implements OrderService {
     @CacheEvict(value = "orders", key = "#id")
     public OrderResponse markAsPaid(UUID id) {
 
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        Order order = findOrder(id);
 
         order.markAsPaid();
 
@@ -95,8 +93,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponse cancelOrder(UUID id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        Order order = findOrder(id);
 
         order.cancel();
 
@@ -106,4 +103,9 @@ public class OrderServiceImpl implements OrderService {
 
         return orderMapper.toResponse(order);
     }
+
+        private Order findOrder(UUID id) {
+                return orderRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        }
 }

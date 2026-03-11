@@ -1,5 +1,6 @@
 package com.example.ordersystem.inventory.domain;
 
+import com.example.ordersystem.shared.exception.ConflictException;
 import com.example.ordersystem.shared.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -36,7 +37,7 @@ public class InventoryItem extends BaseEntity {
 
     public void reserve(int amount) {
         if (available() < amount) {
-            throw new IllegalStateException("Not enough stock");
+            throw new ConflictException("Not enough stock");
         }
         this.reserved += amount;
     }
