@@ -21,9 +21,9 @@ public class RedisConfig {
 
         cacheObjectMapper.activateDefaultTyping(
                 BasicPolymorphicTypeValidator.builder()
-                        .allowIfBaseType(Object.class)
+                        .allowIfSubType("com.example.ordersystem")
                         .build(),
-                ObjectMapper.DefaultTyping.EVERYTHING,
+                ObjectMapper.DefaultTyping.NON_FINAL_AND_ENUMS,
                 JsonTypeInfo.As.PROPERTY
         );
 

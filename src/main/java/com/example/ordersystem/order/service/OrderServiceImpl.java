@@ -35,7 +35,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse createOrder(String email, BigDecimal amount) {
 
         User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Order order = Order.create(user.getId(), user.getEmail(), amount);
         Order saved = orderRepository.save(order);
@@ -44,9 +44,7 @@ public class OrderServiceImpl implements OrderService {
                 new OrderCreatedEvent(
                         saved.getId(),
                         saved.getCustomerEmail(),
-                        saved.getTotalAmount()
-                )
-        );
+                        saved.getTotalAmount()));
 
         return orderMapper.toResponse(saved);
     }
@@ -55,7 +53,8 @@ public class OrderServiceImpl implements OrderService {
     @Cacheable(value = "orders", key = "#id")
     @Transactional(Transactional.TxType.SUPPORTS)
     public OrderResponse getOrder(UUID id) {
-                Order order = findOrder(id);
+
+        Order order = findOrder(id);
 
         return orderMapper.toResponse(order);
     }
@@ -69,9 +68,7 @@ public class OrderServiceImpl implements OrderService {
                 new OrderPaymentRequestedEvent(
                         order.getId(),
                         amount,
-                        order.getTotalAmount()
-                )
-        );
+                        order.getTotalAmount()));
 
         return orderMapper.toResponse(order);
     }
@@ -85,27 +82,27 @@ public class OrderServiceImpl implements OrderService {
         order.markAsPaid();
 
         eventPublisher.publishEvent(
-                new OrderPaidEvent(order.getId())
-        );
+                new OrderPaidEvent(order.getId()));
 
         return orderMapper.toResponse(order);
     }
 
     @Override
+    @CacheEvict(value = "orders", key = "#id")
     public OrderResponse cancelOrder(UUID id) {
+
         Order order = findOrder(id);
 
         order.cancel();
 
         eventPublisher.publishEvent(
-                new OrderCancelledEvent(order.getId())
-        );
+                new OrderCancelledEvent(order.getId()));
 
         return orderMapper.toResponse(order);
     }
 
-        private Order findOrder(UUID id) {
-                return orderRepository.findById(id)
-                                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-        }
+    private Order findOrder(UUID id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+    }
 }
