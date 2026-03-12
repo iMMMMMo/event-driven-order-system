@@ -1,16 +1,9 @@
 package com.example.ordersystem.order.controller.dto;
 
 import com.example.ordersystem.order.domain.OrderStatus;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
 public record OrderResponse(
-        UUID id,
-        String customerEmail,
-        OrderStatus status,
-        BigDecimal totalAmount,
-        Instant createdAt
-) {
-}
+    UUID id, String customerEmail, OrderStatus status, BigDecimal totalAmount, Instant createdAt) {}

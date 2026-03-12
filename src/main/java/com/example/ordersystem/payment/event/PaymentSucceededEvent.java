@@ -4,14 +4,14 @@ import com.example.ordersystem.shared.event.AbstractDomainEvent;
 import java.util.UUID;
 
 public class PaymentSucceededEvent extends AbstractDomainEvent {
-    
-    private final UUID orderId;
 
-    public PaymentSucceededEvent(UUID orderId) {
-        this.orderId = orderId;
-    }
+  private final UUID orderId;
 
-    public UUID getOrderId() {
-        return orderId;
-    }
+  public PaymentSucceededEvent(UUID orderId) {
+    this.orderId = orderId;
+  }
+
+  public UUID getOrderId() {
+    return orderId;
+  }
 }

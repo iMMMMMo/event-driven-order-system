@@ -10,25 +10,25 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
+  private final AuthService authService;
 
-    @PostMapping("/register")
-    public UserResponse register(@RequestBody CreateUserRequest request) {
-        return authService.register(request);
-    }
+  @PostMapping("/register")
+  public UserResponse register(@RequestBody CreateUserRequest request) {
+    return authService.register(request);
+  }
 
-    @PostMapping("/login")
-    public AuthResponse login(@RequestBody LoginUserRequest request) {
-        return authService.login(request);
-    }
+  @PostMapping("/login")
+  public AuthResponse login(@RequestBody LoginUserRequest request) {
+    return authService.login(request);
+  }
 
-    @GetMapping("/me")
-    public AuthResponse getMyToken() {
-        return authService.getCurrentToken();
-    }
+  @GetMapping("/me")
+  public AuthResponse getMyToken() {
+    return authService.getCurrentToken();
+  }
 
-    @GetMapping("/profile")
-    public UserResponse getMyProfile() {
-        return authService.getCurrentUser();
-    }
+  @GetMapping("/profile")
+  public UserResponse getMyProfile() {
+    return authService.getCurrentUser();
+  }
 }

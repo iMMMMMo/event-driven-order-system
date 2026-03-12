@@ -13,36 +13,38 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OrderEventListener {
 
-    private final OrderService orderService;
+  private final OrderService orderService;
 
-    @EventListener
-    public void handleOrderCreated(OrderCreatedEvent event) {
+  @EventListener
+  public void handleOrderCreated(OrderCreatedEvent event) {
 
-        log.info("Order created: {}", event.getOrderId());
-    }
+    log.info("Order created: {}", event.getOrderId());
+  }
 
-    @EventListener
-    public void handlePaymentSucceeded(PaymentSucceededEvent event) {
-        log.info("Payment success event received for order: {}.", event.getOrderId());
-        orderService.markAsPaid(event.getOrderId());
-    }
+  @EventListener
+  public void handlePaymentSucceeded(PaymentSucceededEvent event) {
+    log.info("Payment success event received for order: {}.", event.getOrderId());
+    orderService.markAsPaid(event.getOrderId());
+  }
 
-    @EventListener
-    public void handlePaymentFailed(PaymentFailedEvent event) {
-        log.warn("Payment FAILED for order: {}. Reason: {}. Cancelling order.",
-                event.getOrderId(), event.getReason());
-        orderService.cancelOrder(event.getOrderId());
-    }
+  @EventListener
+  public void handlePaymentFailed(PaymentFailedEvent event) {
+    log.warn(
+        "Payment FAILED for order: {}. Reason: {}. Cancelling order.",
+        event.getOrderId(),
+        event.getReason());
+    orderService.cancelOrder(event.getOrderId());
+  }
 
-    @EventListener
-    public void handleOrderPaid(OrderPaidEvent event) {
+  @EventListener
+  public void handleOrderPaid(OrderPaidEvent event) {
 
-        log.info("Order paid: {}", event.getOrderId());
-    }
+    log.info("Order paid: {}", event.getOrderId());
+  }
 
-    @EventListener
-    public void handleOrderCancelled(OrderCancelledEvent event) {
+  @EventListener
+  public void handleOrderCancelled(OrderCancelledEvent event) {
 
-        log.info("Order cancelled: {}", event.getOrderId());
-    }
+    log.info("Order cancelled: {}", event.getOrderId());
+  }
 }

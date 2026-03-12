@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class NotificationEventListener {
 
-    private final NotificationService notificationService;
+  private final NotificationService notificationService;
 
-    @EventListener
-    public void handleInventoryReserved(InventoryReservedEvent event) {
-        notificationService.sendOrderCompletedNotification(event.getOrderId());
-    }
+  @EventListener
+  public void handleInventoryReserved(InventoryReservedEvent event) {
+    notificationService.sendOrderCompletedNotification(event.getOrderId());
+  }
 }

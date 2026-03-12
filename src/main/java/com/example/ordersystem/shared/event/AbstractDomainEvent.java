@@ -4,10 +4,10 @@ import java.time.Instant;
 
 public abstract class AbstractDomainEvent implements DomainEvent {
 
-    private final Instant occurredAt = Instant.now();
+  private final Instant occurredAt = Instant.now();
 
-    @Override
-    public Instant occurredAt() {
-        return occurredAt;
-    }
+  @Override
+  public Instant occurredAt() {
+    return occurredAt;
+  }
 }

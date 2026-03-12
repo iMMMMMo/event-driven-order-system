@@ -4,5 +4,5 @@ import java.util.UUID;
 
 public interface NotificationService {
 
-    void sendOrderCompletedNotification(UUID orderId);
+  void sendOrderCompletedNotification(UUID orderId);
 }

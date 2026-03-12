@@ -10,15 +10,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class InventoryDataInitializer {
 
-    private final InventoryRepository repository;
+  private final InventoryRepository repository;
 
-    @PostConstruct
-    public void init() {
-        repository.findByProductName("DEFAULT_PRODUCT")
-                .orElseGet(() ->
-                        repository.save(
-                                InventoryItem.create("DEFAULT_PRODUCT", 100)
-                        )
-                );
-    }
+  @PostConstruct
+  public void init() {
+    repository
+        .findByProductName("DEFAULT_PRODUCT")
+        .orElseGet(() -> repository.save(InventoryItem.create("DEFAULT_PRODUCT", 100)));
+  }
 }

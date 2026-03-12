@@ -1,7 +1,7 @@
 package com.example.ordersystem.inventory.domain;
 
-import com.example.ordersystem.shared.exception.ConflictException;
 import com.example.ordersystem.shared.domain.BaseEntity;
+import com.example.ordersystem.shared.exception.ConflictException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -13,36 +13,35 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class InventoryItem extends BaseEntity {
 
-    @Column(nullable = false, unique = true)
-    private String productName;
+  @Column(nullable = false, unique = true)
+  private String productName;
 
-    @Column(nullable = false)
-    private int quantity;
+  @Column(nullable = false)
+  private int quantity;
 
-    @Column(nullable = false)
-    private int reserved;
+  @Column(nullable = false)
+  private int reserved;
 
-    @Version
-    private Long version;
+  @Version private Long version;
 
-    private InventoryItem(String productName, int quantity) {
-        this.productName = productName;
-        this.quantity = quantity;
-        this.reserved = 0;
+  private InventoryItem(String productName, int quantity) {
+    this.productName = productName;
+    this.quantity = quantity;
+    this.reserved = 0;
+  }
+
+  public static InventoryItem create(String productName, int quantity) {
+    return new InventoryItem(productName, quantity);
+  }
+
+  public void reserve(int amount) {
+    if (available() < amount) {
+      throw new ConflictException("Not enough stock");
     }
+    this.reserved += amount;
+  }
 
-    public static InventoryItem create(String productName, int quantity) {
-        return new InventoryItem(productName, quantity);
-    }
-
-    public void reserve(int amount) {
-        if (available() < amount) {
-            throw new ConflictException("Not enough stock");
-        }
-        this.reserved += amount;
-    }
-
-    public int available() {
-        return quantity - reserved;
-    }
+  public int available() {
+    return quantity - reserved;
+  }
 }

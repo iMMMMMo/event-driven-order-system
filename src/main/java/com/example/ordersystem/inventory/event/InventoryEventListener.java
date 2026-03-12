@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class InventoryEventListener {
 
-    private final InventoryService inventoryService;
+  private final InventoryService inventoryService;
 
-    @EventListener
-    public void handlePaymentSuccess(PaymentSucceededEvent event) {
-        inventoryService.reserveForOrder(event.getOrderId());
-    }
+  @EventListener
+  public void handlePaymentSuccess(PaymentSucceededEvent event) {
+    inventoryService.reserveForOrder(event.getOrderId());
+  }
 }

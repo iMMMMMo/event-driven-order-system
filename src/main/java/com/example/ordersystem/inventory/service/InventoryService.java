@@ -4,5 +4,5 @@ import java.util.UUID;
 
 public interface InventoryService {
 
-    void reserveForOrder(UUID orderId);
+  void reserveForOrder(UUID orderId);
 }

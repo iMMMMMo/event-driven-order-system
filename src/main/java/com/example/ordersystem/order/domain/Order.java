@@ -1,15 +1,14 @@
 package com.example.ordersystem.order.domain;
 
-import com.example.ordersystem.shared.exception.ConflictException;
 import com.example.ordersystem.shared.domain.BaseEntity;
+import com.example.ordersystem.shared.exception.ConflictException;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "orders")
@@ -17,55 +16,54 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order extends BaseEntity {
 
-    @Column(nullable = false)
-    private UUID userId;
+  @Column(nullable = false)
+  private UUID userId;
 
-    @Column(nullable = false)
-    private String customerEmail;
+  @Column(nullable = false)
+  private String customerEmail;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private OrderStatus status;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private OrderStatus status;
 
-    @Column(nullable = false, precision = 15, scale = 2)
-    private BigDecimal totalAmount;
+  @Column(nullable = false, precision = 15, scale = 2)
+  private BigDecimal totalAmount;
 
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
+  @Column(nullable = false, updatable = false)
+  private Instant createdAt;
 
-    @Version
-    private Long version;
+  @Version private Long version;
 
-    private Order(UUID userId, String customerEmail, BigDecimal totalAmount) {
-        this.userId = userId;
-        this.customerEmail = customerEmail;
-        this.totalAmount = totalAmount;
-        this.status = OrderStatus.CREATED;
-        this.createdAt = Instant.now();
+  private Order(UUID userId, String customerEmail, BigDecimal totalAmount) {
+    this.userId = userId;
+    this.customerEmail = customerEmail;
+    this.totalAmount = totalAmount;
+    this.status = OrderStatus.CREATED;
+    this.createdAt = Instant.now();
+  }
+
+  public static Order create(UUID userId, String customerEmail, BigDecimal totalAmount) {
+    return new Order(userId, customerEmail, totalAmount);
+  }
+
+  public void markAsPaid() {
+    if (this.status != OrderStatus.CREATED) {
+      throw new ConflictException("Only CREATED orders can be marked as PAID");
     }
+    this.status = OrderStatus.PAID;
+  }
 
-    public static Order create(UUID userId, String customerEmail, BigDecimal totalAmount) {
-        return new Order(userId, customerEmail, totalAmount);
+  public void cancel() {
+    if (this.status != OrderStatus.CREATED) {
+      throw new ConflictException("Only CREATED orders can be marked as CANCELLED");
     }
+    this.status = OrderStatus.CANCELLED;
+  }
 
-    public void markAsPaid() {
-        if (this.status != OrderStatus.CREATED) {
-            throw new ConflictException("Only CREATED orders can be marked as PAID");
-        }
-        this.status = OrderStatus.PAID;
+  public void complete() {
+    if (this.status != OrderStatus.PAID) {
+      throw new ConflictException("Only PAID orders can be COMPLETED");
     }
-
-    public void cancel() {
-        if (this.status != OrderStatus.CREATED) {
-            throw new ConflictException("Only CREATED orders can be marked as CANCELLED");
-        }
-        this.status = OrderStatus.CANCELLED;
-    }
-
-    public void complete() {
-        if (this.status != OrderStatus.PAID) {
-            throw new ConflictException("Only PAID orders can be COMPLETED");
-        }
-        this.status = OrderStatus.COMPLETED;
-    }
+    this.status = OrderStatus.COMPLETED;
+  }
 }
