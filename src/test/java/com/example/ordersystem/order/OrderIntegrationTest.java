@@ -63,6 +63,45 @@ public class OrderIntegrationTest extends AbstractIntegrationTest {
     assertThat(response.getBody()).contains("Order not found");
   }
 
+  @Test
+  void shouldReturnConflictWhenTryingToPayOrderThatIsNotCreated() {
+    AuthSession session = registerAndLogin();
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setBearerAuth(session.token());
+
+    ResponseEntity<OrderResponse> createResponse =
+        restTemplate.exchange(
+            "/api/orders",
+            HttpMethod.POST,
+            new HttpEntity<>(new CreateOrderRequest(new BigDecimal("100.00")), headers),
+            OrderResponse.class);
+
+    assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    assertThat(createResponse.getBody()).isNotNull();
+
+    UUID orderId = createResponse.getBody().id();
+
+    ResponseEntity<OrderResponse> firstPayResponse =
+        restTemplate.exchange(
+            "/api/orders/" + orderId + "/pay?amount=100.00",
+            HttpMethod.PATCH,
+            new HttpEntity<Void>(headers),
+            OrderResponse.class);
+
+    assertThat(firstPayResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    ResponseEntity<String> secondPayResponse =
+        restTemplate.exchange(
+            "/api/orders/" + orderId + "/pay?amount=100.00",
+            HttpMethod.PATCH,
+            new HttpEntity<Void>(headers),
+            String.class);
+
+    assertThat(secondPayResponse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(secondPayResponse.getBody()).contains("Only CREATED orders can be paid");
+  }
+
   private AuthSession registerAndLogin() {
     String email = "order-user-" + UUID.randomUUID() + "@example.com";
     String password = "Password123!";

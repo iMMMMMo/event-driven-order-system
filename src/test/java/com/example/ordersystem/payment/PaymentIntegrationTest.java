@@ -44,7 +44,7 @@ public class PaymentIntegrationTest extends AbstractIntegrationTest {
     Order updatedOrder = orderRepository.findById(order.getId()).orElseThrow();
 
     assertThat(payment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
-    assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.PAID);
+    assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.COMPLETED);
   }
 
   @Test
