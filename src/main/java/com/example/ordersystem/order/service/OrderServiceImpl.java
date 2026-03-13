@@ -2,12 +2,15 @@ package com.example.ordersystem.order.service;
 
 import com.example.ordersystem.order.controller.dto.OrderResponse;
 import com.example.ordersystem.order.domain.Order;
+import com.example.ordersystem.order.domain.OrderStatus;
 import com.example.ordersystem.order.event.OrderCancelledEvent;
+import com.example.ordersystem.order.event.OrderCompletedEvent;
 import com.example.ordersystem.order.event.OrderCreatedEvent;
 import com.example.ordersystem.order.event.OrderPaidEvent;
 import com.example.ordersystem.order.event.OrderPaymentRequestedEvent;
 import com.example.ordersystem.order.mapper.OrderMapper;
 import com.example.ordersystem.order.repository.OrderRepository;
+import com.example.ordersystem.shared.exception.ConflictException;
 import com.example.ordersystem.shared.exception.ResourceNotFoundException;
 import com.example.ordersystem.user.domain.User;
 import com.example.ordersystem.user.repository.UserRepository;
@@ -61,6 +64,9 @@ public class OrderServiceImpl implements OrderService {
   public OrderResponse pay(UUID id, BigDecimal amount) {
 
     Order order = findOrder(id);
+    if (order.getStatus() != OrderStatus.CREATED) {
+      throw new ConflictException("Only CREATED orders can be paid");
+    }
 
     eventPublisher.publishEvent(
         new OrderPaymentRequestedEvent(order.getId(), amount, order.getTotalAmount()));
@@ -77,6 +83,19 @@ public class OrderServiceImpl implements OrderService {
     order.markAsPaid();
 
     eventPublisher.publishEvent(new OrderPaidEvent(order.getId()));
+
+    return orderMapper.toResponse(order);
+  }
+
+  @Override
+  @CacheEvict(value = "orders", key = "#id")
+  public OrderResponse completeOrder(UUID id) {
+
+    Order order = findOrder(id);
+
+    order.complete();
+
+    eventPublisher.publishEvent(new OrderCompletedEvent(order.getId()));
 
     return orderMapper.toResponse(order);
   }

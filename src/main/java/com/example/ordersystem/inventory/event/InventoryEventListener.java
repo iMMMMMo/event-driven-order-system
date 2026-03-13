@@ -1,7 +1,7 @@
 package com.example.ordersystem.inventory.event;
 
 import com.example.ordersystem.inventory.service.InventoryService;
-import com.example.ordersystem.payment.event.PaymentSucceededEvent;
+import com.example.ordersystem.order.event.OrderPaidEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ public class InventoryEventListener {
   private final InventoryService inventoryService;
 
   @EventListener
-  public void handlePaymentSuccess(PaymentSucceededEvent event) {
+  public void handleOrderPaid(OrderPaidEvent event) {
     inventoryService.reserveForOrder(event.getOrderId());
   }
 }

@@ -14,5 +14,7 @@ public interface OrderService {
 
   OrderResponse markAsPaid(UUID id);
 
+  OrderResponse completeOrder(UUID id);
+
   OrderResponse cancelOrder(UUID id);
 }
