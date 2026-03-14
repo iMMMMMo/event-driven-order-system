@@ -1,10 +1,14 @@
 package com.example.ordersystem.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.example.ordersystem.config.AbstractIntegrationTest;
 import com.example.ordersystem.order.controller.dto.CreateOrderRequest;
 import com.example.ordersystem.order.controller.dto.OrderResponse;
+import com.example.ordersystem.order.repository.OrderRepository;
 import com.example.ordersystem.user.controller.dto.AuthResponse;
 import com.example.ordersystem.user.controller.dto.CreateUserRequest;
 import com.example.ordersystem.user.controller.dto.LoginUserRequest;
@@ -19,10 +23,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 public class OrderIntegrationTest extends AbstractIntegrationTest {
 
   @Autowired private TestRestTemplate restTemplate;
+
+  @MockitoSpyBean private OrderRepository orderRepository;
 
   @Test
   void shouldCreateOrderForAuthenticatedUser() {
@@ -100,6 +107,50 @@ public class OrderIntegrationTest extends AbstractIntegrationTest {
 
     assertThat(secondPayResponse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     assertThat(secondPayResponse.getBody()).contains("Only CREATED orders can be paid");
+  }
+
+  @Test
+  void shouldReadOrderFromRedisCacheOnSecondRequest() {
+    AuthSession session = registerAndLogin();
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setBearerAuth(session.token());
+
+    ResponseEntity<OrderResponse> createResponse =
+        restTemplate.exchange(
+            "/api/orders",
+            HttpMethod.POST,
+            new HttpEntity<>(new CreateOrderRequest(new BigDecimal("100.00")), headers),
+            OrderResponse.class);
+
+    assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    assertThat(createResponse.getBody()).isNotNull();
+
+    UUID orderId = createResponse.getBody().id();
+    clearInvocations(orderRepository);
+
+    ResponseEntity<OrderResponse> firstGet =
+        restTemplate.exchange(
+            "/api/orders/" + orderId,
+            HttpMethod.GET,
+            new HttpEntity<Void>(headers),
+            OrderResponse.class);
+
+    ResponseEntity<OrderResponse> secondGet =
+        restTemplate.exchange(
+            "/api/orders/" + orderId,
+            HttpMethod.GET,
+            new HttpEntity<Void>(headers),
+            OrderResponse.class);
+
+    assertThat(firstGet.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(secondGet.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(firstGet.getBody()).isNotNull();
+    assertThat(secondGet.getBody()).isNotNull();
+    assertThat(secondGet.getBody().id()).isEqualTo(orderId);
+    assertThat(secondGet.getBody()).isEqualTo(firstGet.getBody());
+
+    verify(orderRepository, times(1)).findById(orderId);
   }
 
   private AuthSession registerAndLogin() {
