@@ -15,13 +15,16 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class AbstractIntegrationTest {
 
-  @Container @ServiceConnection
+  @SuppressWarnings("resource")
+  @Container
+  @ServiceConnection
   static PostgreSQLContainer<?> postgres =
       new PostgreSQLContainer<>("postgres:16-alpine")
           .withDatabaseName("ordersystem")
           .withUsername("postgres")
           .withPassword("postgres");
 
+  @SuppressWarnings("resource")
   @Container
   @ServiceConnection(name = "redis")
   static GenericContainer<?> redis =
