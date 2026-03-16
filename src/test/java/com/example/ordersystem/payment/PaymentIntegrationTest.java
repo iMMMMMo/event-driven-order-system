@@ -10,6 +10,9 @@ import com.example.ordersystem.payment.domain.Payment;
 import com.example.ordersystem.payment.domain.PaymentStatus;
 import com.example.ordersystem.payment.repository.PaymentRepository;
 import com.example.ordersystem.payment.service.PaymentService;
+import com.example.ordersystem.user.domain.User;
+import com.example.ordersystem.user.domain.UserRole;
+import com.example.ordersystem.user.repository.UserRepository;
 import java.math.BigDecimal;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,10 +27,22 @@ public class PaymentIntegrationTest extends AbstractIntegrationTest {
 
   @Autowired private OrderRepository orderRepository;
 
+  @Autowired private UserRepository userRepository;
+
+  private User testUser;
+
   @BeforeEach
   void resetState() {
     paymentRepository.deleteAll();
     orderRepository.deleteAll();
+    userRepository.deleteAll();
+    testUser =
+        userRepository.save(
+            User.builder()
+                .email("payment-test-" + UUID.randomUUID() + "@example.com")
+                .password("password")
+                .role(UserRole.USER)
+                .build());
   }
 
   @Test
@@ -35,7 +50,7 @@ public class PaymentIntegrationTest extends AbstractIntegrationTest {
     Order order =
         orderRepository.save(
             Order.create(
-                UUID.randomUUID(), "payment-success@example.com", new BigDecimal("100.00")));
+                testUser.getId(), "payment-success@example.com", new BigDecimal("100.00")));
 
     paymentService.processPayment(
         order.getId(), new BigDecimal("100.00"), new BigDecimal("100.00"));
@@ -52,7 +67,7 @@ public class PaymentIntegrationTest extends AbstractIntegrationTest {
     Order order =
         orderRepository.save(
             Order.create(
-                UUID.randomUUID(), "payment-failure@example.com", new BigDecimal("100.00")));
+                testUser.getId(), "payment-failure@example.com", new BigDecimal("100.00")));
 
     paymentService.processPayment(order.getId(), new BigDecimal("90.00"), new BigDecimal("100.00"));
 
