@@ -4,11 +4,11 @@ import com.example.ordersystem.payment.domain.Payment;
 import com.example.ordersystem.payment.event.PaymentFailedEvent;
 import com.example.ordersystem.payment.event.PaymentSucceededEvent;
 import com.example.ordersystem.payment.repository.PaymentRepository;
+import com.example.ordersystem.shared.event.DomainEventPublisher;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 public class PaymentServiceImpl implements PaymentService {
 
   private final PaymentRepository paymentRepository;
-  private final ApplicationEventPublisher eventPublisher;
+  private final DomainEventPublisher eventPublisher;
 
   @Override
   public void processPayment(UUID orderId, BigDecimal amount, BigDecimal expectedAmount) {
@@ -33,11 +33,11 @@ public class PaymentServiceImpl implements PaymentService {
     if (amount.compareTo(expectedAmount) == 0) {
       payment.markSuccess();
       paymentRepository.save(payment);
-      eventPublisher.publishEvent(new PaymentSucceededEvent(orderId));
+      eventPublisher.publish(new PaymentSucceededEvent(orderId));
     } else {
       payment.markFailed();
       paymentRepository.save(payment);
-      eventPublisher.publishEvent(new PaymentFailedEvent(orderId, "Incorrect amount"));
+      eventPublisher.publish(new PaymentFailedEvent(orderId, "Incorrect amount"));
     }
   }
 }

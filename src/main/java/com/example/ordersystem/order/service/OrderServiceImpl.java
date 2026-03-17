@@ -10,6 +10,7 @@ import com.example.ordersystem.order.event.OrderPaidEvent;
 import com.example.ordersystem.order.event.OrderPaymentRequestedEvent;
 import com.example.ordersystem.order.mapper.OrderMapper;
 import com.example.ordersystem.order.repository.OrderRepository;
+import com.example.ordersystem.shared.event.DomainEventPublisher;
 import com.example.ordersystem.shared.exception.ConflictException;
 import com.example.ordersystem.shared.exception.ResourceNotFoundException;
 import com.example.ordersystem.user.domain.User;
@@ -20,7 +21,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,7 +31,7 @@ public class OrderServiceImpl implements OrderService {
   private final UserRepository userRepository;
   private final OrderRepository orderRepository;
   private final OrderMapper orderMapper;
-  private final ApplicationEventPublisher eventPublisher;
+  private final DomainEventPublisher eventPublisher;
 
   @Override
   public OrderResponse createOrder(String email, BigDecimal amount) {
@@ -44,7 +44,7 @@ public class OrderServiceImpl implements OrderService {
     Order order = Order.create(user.getId(), user.getEmail(), amount);
     Order saved = orderRepository.save(order);
 
-    eventPublisher.publishEvent(
+    eventPublisher.publish(
         new OrderCreatedEvent(saved.getId(), saved.getCustomerEmail(), saved.getTotalAmount()));
 
     return orderMapper.toResponse(saved);
@@ -68,7 +68,7 @@ public class OrderServiceImpl implements OrderService {
       throw new ConflictException("Only CREATED orders can be paid");
     }
 
-    eventPublisher.publishEvent(
+    eventPublisher.publish(
         new OrderPaymentRequestedEvent(order.getId(), amount, order.getTotalAmount()));
 
     return orderMapper.toResponse(order);
@@ -82,7 +82,7 @@ public class OrderServiceImpl implements OrderService {
 
     order.markAsPaid();
 
-    eventPublisher.publishEvent(new OrderPaidEvent(order.getId()));
+    eventPublisher.publish(new OrderPaidEvent(order.getId()));
 
     return orderMapper.toResponse(order);
   }
@@ -95,7 +95,7 @@ public class OrderServiceImpl implements OrderService {
 
     order.complete();
 
-    eventPublisher.publishEvent(new OrderCompletedEvent(order.getId()));
+    eventPublisher.publish(new OrderCompletedEvent(order.getId()));
 
     return orderMapper.toResponse(order);
   }
@@ -108,7 +108,7 @@ public class OrderServiceImpl implements OrderService {
 
     order.cancel();
 
-    eventPublisher.publishEvent(new OrderCancelledEvent(order.getId()));
+    eventPublisher.publish(new OrderCancelledEvent(order.getId()));
 
     return orderMapper.toResponse(order);
   }
