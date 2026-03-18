@@ -1,6 +1,7 @@
 package com.example.ordersystem.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -8,12 +9,14 @@ import static org.mockito.Mockito.verify;
 import com.example.ordersystem.config.AbstractIntegrationTest;
 import com.example.ordersystem.order.controller.dto.CreateOrderRequest;
 import com.example.ordersystem.order.controller.dto.OrderResponse;
+import com.example.ordersystem.order.domain.OrderStatus;
 import com.example.ordersystem.order.repository.OrderRepository;
 import com.example.ordersystem.user.controller.dto.AuthResponse;
 import com.example.ordersystem.user.controller.dto.CreateUserRequest;
 import com.example.ordersystem.user.controller.dto.LoginUserRequest;
 import com.example.ordersystem.user.controller.dto.UserResponse;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,6 +100,13 @@ public class OrderIntegrationTest extends AbstractIntegrationTest {
             OrderResponse.class);
 
     assertThat(firstPayResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    await()
+        .atMost(Duration.ofSeconds(5))
+        .until(
+            () ->
+                orderRepository.findById(orderId).orElseThrow().getStatus()
+                    == OrderStatus.COMPLETED);
 
     ResponseEntity<String> secondPayResponse =
         restTemplate.exchange(

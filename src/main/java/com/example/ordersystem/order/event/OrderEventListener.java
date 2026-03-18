@@ -8,7 +8,10 @@ import com.example.ordersystem.payment.event.PaymentSucceededEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Component
@@ -24,13 +27,15 @@ public class OrderEventListener {
     log.info("Order created: {}", event.getOrderId());
   }
 
-  @EventListener
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handlePaymentSucceeded(PaymentSucceededEvent event) {
     log.info("Payment success event received for order: {}.", event.getOrderId());
     orderService.markAsPaid(event.getOrderId());
   }
 
-  @EventListener
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handlePaymentFailed(PaymentFailedEvent event) {
     log.warn(
         "Payment FAILED for order: {}. Reason: {}. Cancelling order.",
@@ -45,7 +50,8 @@ public class OrderEventListener {
     log.info("Order paid: {}", event.getOrderId());
   }
 
-  @EventListener
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handleInventoryReserved(InventoryReservedEvent event) {
     if (orderRepository.existsById(event.getOrderId())) {
       log.info("Inventory reserved for order: {}. Completing order.", event.getOrderId());

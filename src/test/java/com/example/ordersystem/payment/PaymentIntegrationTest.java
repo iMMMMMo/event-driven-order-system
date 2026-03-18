@@ -1,6 +1,7 @@
 package com.example.ordersystem.payment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import com.example.ordersystem.config.AbstractIntegrationTest;
 import com.example.ordersystem.order.domain.Order;
@@ -14,6 +15,7 @@ import com.example.ordersystem.user.domain.User;
 import com.example.ordersystem.user.domain.UserRole;
 import com.example.ordersystem.user.repository.UserRepository;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,11 +57,16 @@ public class PaymentIntegrationTest extends AbstractIntegrationTest {
     paymentService.processPayment(
         order.getId(), new BigDecimal("100.00"), new BigDecimal("100.00"));
 
-    Payment payment = paymentRepository.findAll().getFirst();
-    Order updatedOrder = orderRepository.findById(order.getId()).orElseThrow();
+    await()
+        .atMost(Duration.ofSeconds(5))
+        .untilAsserted(
+            () -> {
+              Payment payment = paymentRepository.findAll().getFirst();
+              Order updatedOrder = orderRepository.findById(order.getId()).orElseThrow();
 
-    assertThat(payment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
-    assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.COMPLETED);
+              assertThat(payment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
+              assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.COMPLETED);
+            });
   }
 
   @Test
@@ -71,10 +78,15 @@ public class PaymentIntegrationTest extends AbstractIntegrationTest {
 
     paymentService.processPayment(order.getId(), new BigDecimal("90.00"), new BigDecimal("100.00"));
 
-    Payment payment = paymentRepository.findAll().getFirst();
-    Order updatedOrder = orderRepository.findById(order.getId()).orElseThrow();
+    await()
+        .atMost(Duration.ofSeconds(5))
+        .untilAsserted(
+            () -> {
+              Payment payment = paymentRepository.findAll().getFirst();
+              Order updatedOrder = orderRepository.findById(order.getId()).orElseThrow();
 
-    assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
-    assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+              assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
+              assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+            });
   }
 }
