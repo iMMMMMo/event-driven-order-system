@@ -20,8 +20,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 public class OutboxPublisherJob {
 
   private final OutboxEventRepository outboxEventRepository;
-  private final ApplicationEventPublisher applicationEventPublisher;
+  private final KafkaTemplate<String, Object> kafkaTemplate;
   private final ObjectMapper objectMapper;
 
   @Value("${app.outbox.publisher.batch-size:50}")
@@ -47,8 +47,14 @@ public class OutboxPublisherJob {
     for (OutboxEvent outboxEvent : pendingEvents) {
       try {
         DomainEvent domainEvent = deserialize(outboxEvent);
-        applicationEventPublisher.publishEvent(domainEvent);
+
+        String topic = determineTopic(outboxEvent.getEventType());
+
+        kafkaTemplate.send(topic, outboxEvent.getId().toString(), domainEvent);
+
         outboxEvent.markPublished(Instant.now());
+        log.info(
+            "Successfully published event {} to Kafka topic {}", outboxEvent.getEventType(), topic);
       } catch (Exception ex) {
         log.error(
             "Failed to publish outbox event id={} type={}",
@@ -58,6 +64,13 @@ public class OutboxPublisherJob {
         outboxEvent.markFailed(ex.getMessage());
       }
     }
+  }
+
+  private String determineTopic(String eventType) {
+    if (eventType.contains(".order.")) return "order-events";
+    if (eventType.contains(".payment.")) return "payment-events";
+    if (eventType.contains(".inventory.")) return "inventory-events";
+    return "system-events";
   }
 
   private DomainEvent deserialize(OutboxEvent outboxEvent) throws IOException {

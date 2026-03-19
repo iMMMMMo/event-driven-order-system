@@ -8,6 +8,8 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -29,4 +31,9 @@ public abstract class AbstractIntegrationTest {
   @ServiceConnection(name = "redis")
   static GenericContainer<?> redis =
       new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
+
+  @SuppressWarnings("resource")
+  @Container
+  @ServiceConnection
+  static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("apache/kafka:3.7.0"));
 }

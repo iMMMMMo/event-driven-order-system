@@ -7,54 +7,41 @@ import com.example.ordersystem.payment.event.PaymentFailedEvent;
 import com.example.ordersystem.payment.event.PaymentSucceededEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.kafka.annotation.KafkaHandler;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@KafkaListener(
+    topics = {"payment-events", "inventory-events", "order-events"},
+    groupId = "order-group")
 public class OrderEventListener {
 
   private final OrderService orderService;
   private final OrderRepository orderRepository;
 
-  @EventListener
-  public void handleOrderCreated(OrderCreatedEvent event) {
-
-    log.info("Order created: {}", event.getOrderId());
-  }
-
-  @Async
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @KafkaHandler
   public void handlePaymentSucceeded(PaymentSucceededEvent event) {
-    log.info("Payment success event received for order: {}.", event.getOrderId());
+    log.info("Payment success event received from Kafka for order: {}.", event.getOrderId());
     orderService.markAsPaid(event.getOrderId());
   }
 
-  @Async
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @KafkaHandler
   public void handlePaymentFailed(PaymentFailedEvent event) {
     log.warn(
-        "Payment FAILED for order: {}. Reason: {}. Cancelling order.",
+        "Payment FAILED event received from Kafka for order: {}. Reason: {}. Cancelling order.",
         event.getOrderId(),
         event.getReason());
     orderService.cancelOrder(event.getOrderId());
   }
 
-  @EventListener
-  public void handleOrderPaid(OrderPaidEvent event) {
-
-    log.info("Order paid: {}", event.getOrderId());
-  }
-
-  @Async
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @KafkaHandler
   public void handleInventoryReserved(InventoryReservedEvent event) {
     if (orderRepository.existsById(event.getOrderId())) {
-      log.info("Inventory reserved for order: {}. Completing order.", event.getOrderId());
+      log.info(
+          "Inventory reserved from Kafka for order: {}. Completing order.", event.getOrderId());
       orderService.completeOrder(event.getOrderId());
     } else {
       log.warn(
@@ -63,15 +50,12 @@ public class OrderEventListener {
     }
   }
 
-  @EventListener
-  public void handleOrderCompleted(OrderCompletedEvent event) {
-
-    log.info("Order completed: {}", event.getOrderId());
-  }
-
-  @EventListener
-  public void handleOrderCancelled(OrderCancelledEvent event) {
-
-    log.info("Order cancelled: {}", event.getOrderId());
+  @KafkaHandler(isDefault = true)
+  public void ignoreOthers(Object event) {
+    if (event instanceof org.springframework.kafka.support.serializer.DeserializationException de) {
+      log.error("Failed to deserialize message: {}", new String(de.getData()), de);
+    } else {
+      log.debug("Ignored event of type {}", event.getClass());
+    }
   }
 }
