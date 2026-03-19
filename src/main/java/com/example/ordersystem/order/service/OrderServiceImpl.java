@@ -20,7 +20,6 @@ import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,6 +29,7 @@ public class OrderServiceImpl implements OrderService {
 
   private final UserRepository userRepository;
   private final OrderRepository orderRepository;
+  private final OrderQueryService orderQueryService;
   private final OrderMapper orderMapper;
   private final DomainEventPublisher eventPublisher;
 
@@ -51,19 +51,21 @@ public class OrderServiceImpl implements OrderService {
   }
 
   @Override
-  @Cacheable(value = "orders", key = "#id")
   @Transactional(Transactional.TxType.SUPPORTS)
-  public OrderResponse getOrder(UUID id) {
-
-    Order order = findOrder(id);
-
+  public OrderResponse getOrder(UUID id, String email) {
+    Order order = orderQueryService.findCachedOrderOrThrow(id);
+    if (!order.getCustomerEmail().equals(email)) {
+      throw new ResourceNotFoundException("Order not found");
+    }
     return orderMapper.toResponse(order);
   }
 
   @Override
-  public OrderResponse pay(UUID id, BigDecimal amount) {
-
+  public OrderResponse pay(UUID id, BigDecimal amount, String email) {
     Order order = findOrder(id);
+    if (!order.getCustomerEmail().equals(email)) {
+      throw new ResourceNotFoundException("Order not found");
+    }
     if (order.getStatus() != OrderStatus.CREATED) {
       throw new ConflictException("Only CREATED orders can be paid");
     }

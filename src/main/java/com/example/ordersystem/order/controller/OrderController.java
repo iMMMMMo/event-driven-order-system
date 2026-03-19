@@ -28,13 +28,15 @@ public class OrderController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<OrderResponse> getOrder(@PathVariable UUID id) {
-    return ResponseEntity.ok(orderService.getOrder(id));
+  public ResponseEntity<OrderResponse> getOrder(
+      @PathVariable UUID id, java.security.Principal principal) {
+    return ResponseEntity.ok(orderService.getOrder(id, principal.getName()));
   }
 
   @PatchMapping("/{id}/pay")
-  public ResponseEntity<OrderResponse> pay(@PathVariable UUID id, @RequestParam BigDecimal amount) {
+  public ResponseEntity<OrderResponse> pay(
+      @PathVariable UUID id, @RequestParam BigDecimal amount, java.security.Principal principal) {
 
-    return ResponseEntity.ok(orderService.pay(id, amount));
+    return ResponseEntity.ok(orderService.pay(id, amount, principal.getName()));
   }
 }

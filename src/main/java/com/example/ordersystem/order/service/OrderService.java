@@ -8,9 +8,9 @@ public interface OrderService {
 
   OrderResponse createOrder(String email, BigDecimal amount);
 
-  OrderResponse getOrder(UUID id);
+  OrderResponse getOrder(UUID id, String email);
 
-  OrderResponse pay(UUID id, BigDecimal amount);
+  OrderResponse pay(UUID id, BigDecimal amount, String email);
 
   OrderResponse markAsPaid(UUID id);
 
