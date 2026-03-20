@@ -7,6 +7,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.example.ordersystem.config.AbstractIntegrationTest;
+import com.example.ordersystem.inventory.domain.InventoryItem;
+import com.example.ordersystem.inventory.repository.InventoryRepository;
+import com.example.ordersystem.order.controller.dto.CreateOrderItemRequest;
 import com.example.ordersystem.order.controller.dto.CreateOrderRequest;
 import com.example.ordersystem.order.controller.dto.OrderResponse;
 import com.example.ordersystem.order.domain.OrderStatus;
@@ -17,6 +20,7 @@ import com.example.ordersystem.user.controller.dto.LoginUserRequest;
 import com.example.ordersystem.user.controller.dto.UserResponse;
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +36,24 @@ public class OrderIntegrationTest extends AbstractIntegrationTest {
 
   @Autowired private TestRestTemplate restTemplate;
 
+  @Autowired private InventoryRepository inventoryRepository;
+
   @MockitoSpyBean private OrderRepository orderRepository;
 
   @Test
   void shouldCreateOrderForAuthenticatedUser() {
     AuthSession session = registerAndLogin();
+
+    UUID productId =
+        inventoryRepository
+            .save(
+                InventoryItem.create(
+                    "ORDER_PRODUCT_" + UUID.randomUUID(),
+                    new BigDecimal("100.00"),
+                    "Test",
+                    "General",
+                    10))
+            .getId();
 
     HttpHeaders headers = new HttpHeaders();
     headers.setBearerAuth(session.token());
@@ -45,7 +62,8 @@ public class OrderIntegrationTest extends AbstractIntegrationTest {
         restTemplate.exchange(
             "/api/orders",
             HttpMethod.POST,
-            new HttpEntity<>(new CreateOrderRequest(new BigDecimal("100.00")), headers),
+            new HttpEntity<>(
+                new CreateOrderRequest(List.of(new CreateOrderItemRequest(productId, 1))), headers),
             OrderResponse.class);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -53,6 +71,8 @@ public class OrderIntegrationTest extends AbstractIntegrationTest {
     assertThat(response.getBody()).isNotNull();
     assertThat(response.getBody().customerEmail()).isEqualTo(session.email());
     assertThat(response.getBody().status()).isNotNull();
+    assertThat(response.getBody().totalAmount()).isEqualByComparingTo(new BigDecimal("100.00"));
+    assertThat(response.getBody().items()).hasSize(1);
   }
 
   @Test
@@ -77,6 +97,17 @@ public class OrderIntegrationTest extends AbstractIntegrationTest {
   void shouldReturnConflictWhenTryingToPayOrderThatIsNotCreated() {
     AuthSession session = registerAndLogin();
 
+    UUID productId =
+        inventoryRepository
+            .save(
+                InventoryItem.create(
+                    "ORDER_PRODUCT_" + UUID.randomUUID(),
+                    new BigDecimal("100.00"),
+                    "Test",
+                    "General",
+                    10))
+            .getId();
+
     HttpHeaders headers = new HttpHeaders();
     headers.setBearerAuth(session.token());
 
@@ -84,17 +115,19 @@ public class OrderIntegrationTest extends AbstractIntegrationTest {
         restTemplate.exchange(
             "/api/orders",
             HttpMethod.POST,
-            new HttpEntity<>(new CreateOrderRequest(new BigDecimal("100.00")), headers),
+            new HttpEntity<>(
+                new CreateOrderRequest(List.of(new CreateOrderItemRequest(productId, 1))), headers),
             OrderResponse.class);
 
     assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     assertThat(createResponse.getBody()).isNotNull();
 
     UUID orderId = createResponse.getBody().id();
+    BigDecimal amount = createResponse.getBody().totalAmount();
 
     ResponseEntity<OrderResponse> firstPayResponse =
         restTemplate.exchange(
-            "/api/orders/" + orderId + "/pay?amount=100.00",
+            "/api/orders/" + orderId + "/pay?amount=" + amount,
             HttpMethod.PATCH,
             new HttpEntity<Void>(headers),
             OrderResponse.class);
@@ -110,7 +143,7 @@ public class OrderIntegrationTest extends AbstractIntegrationTest {
 
     ResponseEntity<String> secondPayResponse =
         restTemplate.exchange(
-            "/api/orders/" + orderId + "/pay?amount=100.00",
+            "/api/orders/" + orderId + "/pay?amount=" + amount,
             HttpMethod.PATCH,
             new HttpEntity<Void>(headers),
             String.class);
@@ -123,6 +156,17 @@ public class OrderIntegrationTest extends AbstractIntegrationTest {
   void shouldReadOrderFromRedisCacheOnSecondRequest() {
     AuthSession session = registerAndLogin();
 
+    UUID productId =
+        inventoryRepository
+            .save(
+                InventoryItem.create(
+                    "ORDER_PRODUCT_" + UUID.randomUUID(),
+                    new BigDecimal("100.00"),
+                    "Test",
+                    "General",
+                    10))
+            .getId();
+
     HttpHeaders headers = new HttpHeaders();
     headers.setBearerAuth(session.token());
 
@@ -130,7 +174,8 @@ public class OrderIntegrationTest extends AbstractIntegrationTest {
         restTemplate.exchange(
             "/api/orders",
             HttpMethod.POST,
-            new HttpEntity<>(new CreateOrderRequest(new BigDecimal("100.00")), headers),
+            new HttpEntity<>(
+                new CreateOrderRequest(List.of(new CreateOrderItemRequest(productId, 1))), headers),
             OrderResponse.class);
 
     assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);

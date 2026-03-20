@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import com.example.ordersystem.config.AbstractIntegrationTest;
+import com.example.ordersystem.inventory.domain.InventoryItem;
+import com.example.ordersystem.inventory.repository.InventoryRepository;
 import com.example.ordersystem.order.domain.Order;
 import com.example.ordersystem.order.domain.OrderStatus;
 import com.example.ordersystem.order.repository.OrderRepository;
@@ -31,6 +33,8 @@ public class PaymentIntegrationTest extends AbstractIntegrationTest {
 
   @Autowired private UserRepository userRepository;
 
+  @Autowired private InventoryRepository inventoryRepository;
+
   private User testUser;
 
   @BeforeEach
@@ -38,6 +42,7 @@ public class PaymentIntegrationTest extends AbstractIntegrationTest {
     paymentRepository.deleteAll();
     orderRepository.deleteAll();
     userRepository.deleteAll();
+    inventoryRepository.deleteAll();
     testUser =
         userRepository.save(
             User.builder()
@@ -49,41 +54,63 @@ public class PaymentIntegrationTest extends AbstractIntegrationTest {
 
   @Test
   void shouldPersistSuccessfulPaymentAndMarkOrderAsPaid() {
-    Order order =
-        orderRepository.save(
-            Order.create(
-                testUser.getId(), "payment-success@example.com", new BigDecimal("100.00")));
+    InventoryItem product =
+        inventoryRepository.save(
+            InventoryItem.create(
+                "PAYMENT_PRODUCT_" + UUID.randomUUID(),
+                new BigDecimal("100.00"),
+                "Test",
+                "General",
+                10));
 
-    paymentService.processPayment(
-        order.getId(), new BigDecimal("100.00"), new BigDecimal("100.00"));
+    Order order =
+        Order.create(testUser.getId(), "payment-success@example.com", new BigDecimal("100.00"));
+    order.addItem(product.getId(), 1, product.getPrice());
+    Order savedOrder = orderRepository.save(order);
+    UUID orderId = savedOrder.getId();
+    UUID productId = product.getId();
+
+    paymentService.processPayment(orderId, new BigDecimal("100.00"), new BigDecimal("100.00"));
 
     await()
         .atMost(Duration.ofSeconds(5))
         .untilAsserted(
             () -> {
               Payment payment = paymentRepository.findAll().getFirst();
-              Order updatedOrder = orderRepository.findById(order.getId()).orElseThrow();
+              Order updatedOrder = orderRepository.findById(orderId).orElseThrow();
+              InventoryItem updatedProduct = inventoryRepository.findById(productId).orElseThrow();
 
               assertThat(payment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
               assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.COMPLETED);
+              assertThat(updatedProduct.getReserved()).isEqualTo(1);
             });
   }
 
   @Test
   void shouldPersistFailedPaymentAndCancelOrderWhenAmountDoesNotMatch() {
-    Order order =
-        orderRepository.save(
-            Order.create(
-                testUser.getId(), "payment-failure@example.com", new BigDecimal("100.00")));
+    InventoryItem product =
+        inventoryRepository.save(
+            InventoryItem.create(
+                "PAYMENT_PRODUCT_" + UUID.randomUUID(),
+                new BigDecimal("100.00"),
+                "Test",
+                "General",
+                10));
 
-    paymentService.processPayment(order.getId(), new BigDecimal("90.00"), new BigDecimal("100.00"));
+    Order order =
+        Order.create(testUser.getId(), "payment-failure@example.com", new BigDecimal("100.00"));
+    order.addItem(product.getId(), 1, product.getPrice());
+    Order savedOrder = orderRepository.save(order);
+    UUID orderId = savedOrder.getId();
+
+    paymentService.processPayment(orderId, new BigDecimal("90.00"), new BigDecimal("100.00"));
 
     await()
         .atMost(Duration.ofSeconds(5))
         .untilAsserted(
             () -> {
               Payment payment = paymentRepository.findAll().getFirst();
-              Order updatedOrder = orderRepository.findById(order.getId()).orElseThrow();
+              Order updatedOrder = orderRepository.findById(orderId).orElseThrow();
 
               assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
               assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);

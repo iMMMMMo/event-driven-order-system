@@ -1,7 +1,7 @@
 package com.example.ordersystem.order.controller.dto;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import java.math.BigDecimal;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import java.util.List;
 
-public record CreateOrderRequest(@NotNull @Positive BigDecimal totalAmount) {}
+public record CreateOrderRequest(@NotEmpty @Valid List<CreateOrderItemRequest> items) {}

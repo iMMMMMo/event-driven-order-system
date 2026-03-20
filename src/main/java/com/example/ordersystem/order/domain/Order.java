@@ -5,6 +5,8 @@ import com.example.ordersystem.shared.exception.ConflictException;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -29,6 +31,13 @@ public class Order extends BaseEntity {
   @Column(nullable = false, precision = 15, scale = 2)
   private BigDecimal totalAmount;
 
+  @OneToMany(
+      mappedBy = "order",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
+      fetch = FetchType.EAGER)
+  private List<OrderItem> items = new ArrayList<>();
+
   @Column(nullable = false, updatable = false)
   private Instant createdAt;
 
@@ -44,6 +53,10 @@ public class Order extends BaseEntity {
 
   public static Order create(UUID userId, String customerEmail, BigDecimal totalAmount) {
     return new Order(userId, customerEmail, totalAmount);
+  }
+
+  public void addItem(UUID productId, int quantity, BigDecimal unitPrice) {
+    this.items.add(OrderItem.create(this, productId, quantity, unitPrice));
   }
 
   public void markAsPaid() {

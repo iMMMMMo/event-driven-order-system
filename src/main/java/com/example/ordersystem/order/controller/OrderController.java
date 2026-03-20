@@ -22,7 +22,7 @@ public class OrderController {
   public ResponseEntity<OrderResponse> createOrder(
       @Valid @RequestBody CreateOrderRequest request, java.security.Principal principal) {
 
-    OrderResponse response = orderService.createOrder(principal.getName(), request.totalAmount());
+    OrderResponse response = orderService.createOrder(principal.getName(), request.items());
 
     return ResponseEntity.created(URI.create("/api/orders/" + response.id())).body(response);
   }
