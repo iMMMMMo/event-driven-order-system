@@ -2,6 +2,9 @@ package com.example.ordersystem.inventory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.example.ordersystem.config.AbstractIntegrationTest;
 import com.example.ordersystem.inventory.domain.InventoryItem;
@@ -18,12 +21,13 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 public class InventoryIntegrationTest extends AbstractIntegrationTest {
 
   @Autowired private InventoryService inventoryService;
 
-  @Autowired private InventoryRepository inventoryRepository;
+  @MockitoSpyBean private InventoryRepository inventoryRepository;
 
   @Autowired private OrderRepository orderRepository;
 
@@ -94,5 +98,20 @@ public class InventoryIntegrationTest extends AbstractIntegrationTest {
     assertThatThrownBy(() -> inventoryService.reserveForOrder(savedOrder.getId()))
         .isInstanceOf(ConflictException.class)
         .hasMessage("Not enough stock");
+  }
+
+  @Test
+  void shouldCacheSingleProductById() {
+    InventoryItem product =
+        inventoryRepository.save(
+            InventoryItem.create(
+                "PRODUCT_" + UUID.randomUUID(), new BigDecimal("10.00"), "d", "c", 10));
+
+    clearInvocations(inventoryRepository);
+
+    inventoryService.getProduct(product.getId());
+    inventoryService.getProduct(product.getId());
+
+    verify(inventoryRepository, times(1)).findById(product.getId());
   }
 }

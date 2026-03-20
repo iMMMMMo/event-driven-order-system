@@ -25,7 +25,7 @@ public class RedisConfig {
                   mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
                 });
 
-    RedisCacheConfiguration config =
+    RedisCacheConfiguration defaultConfig =
         RedisCacheConfiguration.defaultCacheConfig()
             .serializeKeysWith(
                 RedisSerializationContext.SerializationPair.fromSerializer(
@@ -35,6 +35,13 @@ public class RedisConfig {
             .entryTtl(Duration.ofMinutes(10))
             .disableCachingNullValues();
 
-    return RedisCacheManager.builder(connectionFactory).cacheDefaults(config).build();
+    RedisCacheConfiguration ordersConfig = defaultConfig.entryTtl(Duration.ofMinutes(10));
+    RedisCacheConfiguration productByIdConfig = defaultConfig.entryTtl(Duration.ofMinutes(5));
+
+    return RedisCacheManager.builder(connectionFactory)
+        .cacheDefaults(defaultConfig)
+        .withCacheConfiguration("orders", ordersConfig)
+        .withCacheConfiguration("productById", productByIdConfig)
+        .build();
   }
 }

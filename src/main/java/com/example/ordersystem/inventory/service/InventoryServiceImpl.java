@@ -12,6 +12,8 @@ import com.example.ordersystem.shared.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,11 +23,14 @@ import org.springframework.stereotype.Service;
 @Transactional
 public class InventoryServiceImpl implements InventoryService {
 
+  private static final String PRODUCT_BY_ID_CACHE = "productById";
+
   private final InventoryRepository inventoryRepository;
   private final OrderItemLookupRepository orderItemLookupRepository;
   private final DomainEventPublisher eventPublisher;
 
   @Override
+  @CacheEvict(value = PRODUCT_BY_ID_CACHE, allEntries = true)
   public void reserveForOrder(UUID orderId) {
 
     for (OrderItemRow item : orderItemLookupRepository.findByOrderId(orderId)) {
@@ -52,6 +57,7 @@ public class InventoryServiceImpl implements InventoryService {
   }
 
   @Override
+  @Cacheable(value = PRODUCT_BY_ID_CACHE, key = "#id")
   public ProductResponse getProduct(UUID id) {
     return inventoryRepository
         .findById(id)
@@ -60,6 +66,7 @@ public class InventoryServiceImpl implements InventoryService {
   }
 
   @Override
+  @CacheEvict(value = PRODUCT_BY_ID_CACHE, allEntries = true)
   public ProductResponse createProduct(CreateProductRequest request) {
     InventoryItem item =
         InventoryItem.create(

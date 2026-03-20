@@ -43,10 +43,6 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/products/**")
                     .permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/auth/me", "/api/auth/profile")
-                    .authenticated()
-                    .requestMatchers("/api/orders/**")
-                    .hasRole("USER")
                     .anyRequest()
                     .authenticated())
         .sessionManagement(
