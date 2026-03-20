@@ -9,6 +9,7 @@ import com.example.ordersystem.inventory.repository.InventoryRepository;
 import com.example.ordersystem.inventory.service.InventoryService;
 import com.example.ordersystem.shared.exception.ConflictException;
 import com.example.ordersystem.shared.exception.ResourceNotFoundException;
+import java.math.BigDecimal;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,8 @@ public class InventoryIntegrationTest extends AbstractIntegrationTest {
   @BeforeEach
   void resetInventory() {
     inventoryRepository.deleteAll();
-    inventoryRepository.save(InventoryItem.create("DEFAULT_PRODUCT", 10));
+    inventoryRepository.save(
+        InventoryItem.create("DEFAULT_PRODUCT", new BigDecimal("99.99"), "Default", "General", 10));
   }
 
   @Test
@@ -48,7 +50,8 @@ public class InventoryIntegrationTest extends AbstractIntegrationTest {
   @Test
   void shouldThrowConflictWhenStockIsUnavailable() {
     inventoryRepository.deleteAll();
-    inventoryRepository.save(InventoryItem.create("DEFAULT_PRODUCT", 0));
+    inventoryRepository.save(
+        InventoryItem.create("DEFAULT_PRODUCT", new BigDecimal("99.99"), "Default", "General", 0));
 
     assertThatThrownBy(() -> inventoryService.reserveForOrder(UUID.randomUUID()))
         .isInstanceOf(ConflictException.class)
