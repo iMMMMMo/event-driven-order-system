@@ -8,8 +8,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +30,10 @@ public class ProductController {
       summary = "Get products",
       description = "Retrieve a list of products with optional category filter")
   public Page<ProductResponse> getProducts(
-      @RequestParam(required = false) String category, Pageable pageable) {
+      @RequestParam(required = false) String category,
+      @ParameterObject
+          @PageableDefault(size = 20, sort = "productName", direction = Sort.Direction.ASC)
+          Pageable pageable) {
     return inventoryService.getProducts(category, pageable);
   }
 
