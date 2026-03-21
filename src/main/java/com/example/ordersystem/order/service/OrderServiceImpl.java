@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -39,6 +41,20 @@ public class OrderServiceImpl implements OrderService {
   private final InventoryRepository inventoryRepository;
   private final OrderMapper orderMapper;
   private final DomainEventPublisher eventPublisher;
+
+  @Override
+  @Transactional(Transactional.TxType.SUPPORTS)
+  public Page<OrderResponse> getOrdersForUser(String email, Pageable pageable) {
+    return orderRepository
+        .findByCustomerEmailOrderByCreatedAtDesc(email, pageable)
+        .map(orderMapper::toResponse);
+  }
+
+  @Override
+  @Transactional(Transactional.TxType.SUPPORTS)
+  public Page<OrderResponse> getAllOrders(Pageable pageable) {
+    return orderRepository.findAllByOrderByCreatedAtDesc(pageable).map(orderMapper::toResponse);
+  }
 
   @Override
   public OrderResponse createOrder(String email, List<CreateOrderItemRequest> items) {

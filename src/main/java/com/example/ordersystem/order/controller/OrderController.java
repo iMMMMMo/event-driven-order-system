@@ -10,7 +10,10 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,6 +23,22 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
 
   private final OrderService orderService;
+
+  @GetMapping
+  @Operation(
+      summary = "Get current user orders",
+      description = "Retrieve orders for the current user")
+  public ResponseEntity<Page<OrderResponse>> getCurrentUserOrders(
+      Pageable pageable, java.security.Principal principal) {
+    return ResponseEntity.ok(orderService.getOrdersForUser(principal.getName(), pageable));
+  }
+
+  @GetMapping("/admin")
+  @PreAuthorize("hasRole('ADMIN')")
+  @Operation(summary = "Get all orders", description = "Retrieve all orders (Admin only)")
+  public ResponseEntity<Page<OrderResponse>> getAllOrders(Pageable pageable) {
+    return ResponseEntity.ok(orderService.getAllOrders(pageable));
+  }
 
   @PostMapping
   @Operation(summary = "Create order", description = "Create a new order for the current user")

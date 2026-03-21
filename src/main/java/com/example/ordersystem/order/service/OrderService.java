@@ -5,8 +5,14 @@ import com.example.ordersystem.order.controller.dto.OrderResponse;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface OrderService {
+
+  Page<OrderResponse> getOrdersForUser(String email, Pageable pageable);
+
+  Page<OrderResponse> getAllOrders(Pageable pageable);
 
   OrderResponse createOrder(String email, List<CreateOrderItemRequest> items);
 
