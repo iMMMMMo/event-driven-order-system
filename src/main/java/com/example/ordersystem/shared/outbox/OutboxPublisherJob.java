@@ -6,6 +6,7 @@ import com.example.ordersystem.order.event.OrderCompletedEvent;
 import com.example.ordersystem.order.event.OrderCreatedEvent;
 import com.example.ordersystem.order.event.OrderPaidEvent;
 import com.example.ordersystem.order.event.OrderPaymentRequestedEvent;
+import com.example.ordersystem.order.event.OrderStripeCheckoutRequestedEvent;
 import com.example.ordersystem.payment.event.PaymentFailedEvent;
 import com.example.ordersystem.payment.event.PaymentSucceededEvent;
 import com.example.ordersystem.shared.event.DomainEvent;
@@ -87,6 +88,9 @@ public class OutboxPublisherJob {
               uuid(payload, "orderId"),
               decimal(payload, "amount"),
               decimal(payload, "expectedAmount"));
+      case "com.example.ordersystem.order.event.OrderStripeCheckoutRequestedEvent" ->
+          new OrderStripeCheckoutRequestedEvent(
+              uuid(payload, "orderId"), decimal(payload, "amount"));
       case "com.example.ordersystem.order.event.OrderPaidEvent" ->
           new OrderPaidEvent(uuid(payload, "orderId"));
       case "com.example.ordersystem.order.event.OrderCompletedEvent" ->

@@ -2,6 +2,7 @@ package com.example.ordersystem.order.controller;
 
 import com.example.ordersystem.order.controller.dto.CreateOrderRequest;
 import com.example.ordersystem.order.controller.dto.OrderResponse;
+import com.example.ordersystem.order.controller.dto.StripePaymentRequestResponse;
 import com.example.ordersystem.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -72,5 +73,16 @@ public class OrderController {
       @PathVariable UUID id, @RequestParam BigDecimal amount, java.security.Principal principal) {
 
     return ResponseEntity.ok(orderService.pay(id, amount, principal.getName()));
+  }
+
+  @PostMapping("/{id}/payments/stripe")
+  @Operation(
+      summary = "Request Stripe payment",
+      description = "Initiate Stripe Checkout asynchronously and return polling URL")
+  public ResponseEntity<StripePaymentRequestResponse> requestStripePayment(
+      @PathVariable UUID id, java.security.Principal principal) {
+
+    return ResponseEntity.accepted()
+        .body(orderService.requestStripeCheckout(id, principal.getName()));
   }
 }
