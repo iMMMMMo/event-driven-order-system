@@ -5,8 +5,10 @@ import com.example.ordersystem.inventory.repository.InventoryRepository;
 import com.example.ordersystem.order.controller.dto.CreateOrderItemRequest;
 import com.example.ordersystem.order.controller.dto.OrderResponse;
 import com.example.ordersystem.order.controller.dto.StripePaymentRequestResponse;
+import com.example.ordersystem.order.controller.dto.StripePaymentStatusResponse;
 import com.example.ordersystem.order.domain.Order;
 import com.example.ordersystem.order.domain.OrderStatus;
+import com.example.ordersystem.order.domain.StripeCheckoutRequest;
 import com.example.ordersystem.order.event.OrderCancelledEvent;
 import com.example.ordersystem.order.event.OrderCompletedEvent;
 import com.example.ordersystem.order.event.OrderCreatedEvent;
@@ -15,6 +17,7 @@ import com.example.ordersystem.order.event.OrderPaymentRequestedEvent;
 import com.example.ordersystem.order.event.OrderStripeCheckoutRequestedEvent;
 import com.example.ordersystem.order.mapper.OrderMapper;
 import com.example.ordersystem.order.repository.OrderRepository;
+import com.example.ordersystem.order.repository.StripeCheckoutRequestRepository;
 import com.example.ordersystem.shared.event.DomainEventPublisher;
 import com.example.ordersystem.shared.exception.ConflictException;
 import com.example.ordersystem.shared.exception.ResourceNotFoundException;
@@ -43,6 +46,7 @@ public class OrderServiceImpl implements OrderService {
   private final InventoryRepository inventoryRepository;
   private final OrderMapper orderMapper;
   private final DomainEventPublisher eventPublisher;
+  private final StripeCheckoutRequestRepository stripeCheckoutRequestRepository;
 
   @Override
   @Transactional(Transactional.TxType.SUPPORTS)
@@ -144,11 +148,32 @@ public class OrderServiceImpl implements OrderService {
       throw new ConflictException("Only CREATED orders can be paid");
     }
 
-    eventPublisher.publish(
-        new OrderStripeCheckoutRequestedEvent(order.getId(), order.getTotalAmount()));
-
+    StripeCheckoutRequest existingRequest =
+        stripeCheckoutRequestRepository.findByOrderId(order.getId()).orElse(null);
+    if (existingRequest == null) {
+      stripeCheckoutRequestRepository.save(StripeCheckoutRequest.requested(order.getId()));
+      eventPublisher.publish(
+          new OrderStripeCheckoutRequestedEvent(order.getId(), order.getTotalAmount()));
+    }
     String pollUrl = "/api/orders/" + order.getId() + "/payments/stripe";
     return new StripePaymentRequestResponse(order.getId(), "REQUESTED", pollUrl);
+  }
+
+  @Override
+  @Transactional(Transactional.TxType.SUPPORTS)
+  public StripePaymentStatusResponse getStripeCheckoutStatus(UUID id, String email) {
+    Order order = findOrder(id);
+    if (!order.getCustomerEmail().equals(email)) {
+      throw new ResourceNotFoundException("Order not found");
+    }
+
+    return stripeCheckoutRequestRepository
+        .findByOrderId(order.getId())
+        .map(
+            r ->
+                new StripePaymentStatusResponse(
+                    order.getId(), r.getStatus().name(), r.getCheckoutUrl()))
+        .orElseGet(() -> new StripePaymentStatusResponse(order.getId(), "NOT_REQUESTED", null));
   }
 
   @Override

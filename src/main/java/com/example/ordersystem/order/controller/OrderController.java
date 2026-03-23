@@ -3,6 +3,7 @@ package com.example.ordersystem.order.controller;
 import com.example.ordersystem.order.controller.dto.CreateOrderRequest;
 import com.example.ordersystem.order.controller.dto.OrderResponse;
 import com.example.ordersystem.order.controller.dto.StripePaymentRequestResponse;
+import com.example.ordersystem.order.controller.dto.StripePaymentStatusResponse;
 import com.example.ordersystem.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -84,5 +85,15 @@ public class OrderController {
 
     return ResponseEntity.accepted()
         .body(orderService.requestStripeCheckout(id, principal.getName()));
+  }
+
+  @GetMapping("/{id}/payments/stripe")
+  @Operation(
+      summary = "Get Stripe payment status",
+      description = "Poll current Stripe checkout status for an order")
+  public ResponseEntity<StripePaymentStatusResponse> getStripePaymentStatus(
+      @PathVariable UUID id, java.security.Principal principal) {
+
+    return ResponseEntity.ok(orderService.getStripeCheckoutStatus(id, principal.getName()));
   }
 }

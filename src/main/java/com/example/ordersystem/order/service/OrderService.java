@@ -3,6 +3,7 @@ package com.example.ordersystem.order.service;
 import com.example.ordersystem.order.controller.dto.CreateOrderItemRequest;
 import com.example.ordersystem.order.controller.dto.OrderResponse;
 import com.example.ordersystem.order.controller.dto.StripePaymentRequestResponse;
+import com.example.ordersystem.order.controller.dto.StripePaymentStatusResponse;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +23,8 @@ public interface OrderService {
   OrderResponse pay(UUID id, BigDecimal amount, String email);
 
   StripePaymentRequestResponse requestStripeCheckout(UUID id, String email);
+
+  StripePaymentStatusResponse getStripeCheckoutStatus(UUID id, String email);
 
   OrderResponse markAsPaid(UUID id);
 
