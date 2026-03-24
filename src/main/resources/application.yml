@@ -39,3 +39,10 @@ server:
 springdoc:
   swagger-ui:
     persistAuthorization: true
+
+app:
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    currency: ${STRIPE_CURRENCY:pln}
+    success-url: ${STRIPE_SUCCESS_URL:http://localhost:8080/swagger-ui/index.html}
+    cancel-url: ${STRIPE_CANCEL_URL:http://localhost:8080/swagger-ui/index.html}

@@ -20,6 +20,11 @@ public class EventDrivenOrderSystemApplication {
     System.setProperty("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
     System.setProperty("DB_PORT", dotenv.get("DB_PORT"));
 
+    String stripeSecretKey = dotenv.get("STRIPE_SECRET_KEY");
+    if (stripeSecretKey != null) {
+      System.setProperty("STRIPE_SECRET_KEY", stripeSecretKey);
+    }
+
     SpringApplication.run(EventDrivenOrderSystemApplication.class, args);
   }
 }
