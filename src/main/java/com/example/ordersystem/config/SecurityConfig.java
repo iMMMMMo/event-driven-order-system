@@ -41,6 +41,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login")
                     .permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/stripe/webhook")
+                    .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/products/**")
                     .permitAll()
                     .anyRequest()

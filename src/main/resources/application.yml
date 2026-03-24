@@ -43,6 +43,8 @@ springdoc:
 app:
   stripe:
     secret-key: ${STRIPE_SECRET_KEY:}
+    webhook:
+      secret: ${STRIPE_WEBHOOK_SECRET:}
     currency: ${STRIPE_CURRENCY:pln}
     success-url: ${STRIPE_SUCCESS_URL:http://localhost:8080/swagger-ui/index.html}
     cancel-url: ${STRIPE_CANCEL_URL:http://localhost:8080/swagger-ui/index.html}

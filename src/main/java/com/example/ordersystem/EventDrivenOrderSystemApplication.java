@@ -25,6 +25,11 @@ public class EventDrivenOrderSystemApplication {
       System.setProperty("STRIPE_SECRET_KEY", stripeSecretKey);
     }
 
+    String stripeWebhookSecret = dotenv.get("STRIPE_WEBHOOK_SECRET");
+    if (stripeWebhookSecret != null) {
+      System.setProperty("STRIPE_WEBHOOK_SECRET", stripeWebhookSecret);
+    }
+
     SpringApplication.run(EventDrivenOrderSystemApplication.class, args);
   }
 }
