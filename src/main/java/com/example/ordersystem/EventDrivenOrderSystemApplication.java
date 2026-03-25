@@ -14,22 +14,33 @@ public class EventDrivenOrderSystemApplication {
   public static void main(String[] args) {
     Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
-    System.setProperty("SECRET_KEY", dotenv.get("SECRET_KEY"));
-    System.setProperty("DB_NAME", dotenv.get("DB_NAME"));
-    System.setProperty("DB_USER", dotenv.get("DB_USER"));
-    System.setProperty("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
-    System.setProperty("DB_PORT", dotenv.get("DB_PORT"));
+    require(dotenv, "SECRET_KEY");
+    require(dotenv, "DB_NAME");
+    require(dotenv, "DB_USER");
+    require(dotenv, "DB_PASSWORD");
+    require(dotenv, "DB_PORT");
 
-    String stripeSecretKey = dotenv.get("STRIPE_SECRET_KEY");
-    if (stripeSecretKey != null) {
-      System.setProperty("STRIPE_SECRET_KEY", stripeSecretKey);
-    }
-
-    String stripeWebhookSecret = dotenv.get("STRIPE_WEBHOOK_SECRET");
-    if (stripeWebhookSecret != null) {
-      System.setProperty("STRIPE_WEBHOOK_SECRET", stripeWebhookSecret);
-    }
+    optional(dotenv, "STRIPE_SECRET_KEY");
+    optional(dotenv, "STRIPE_WEBHOOK_SECRET");
+    optional(dotenv, "STRIPE_CURRENCY");
+    optional(dotenv, "STRIPE_SUCCESS_URL");
+    optional(dotenv, "STRIPE_CANCEL_URL");
 
     SpringApplication.run(EventDrivenOrderSystemApplication.class, args);
+  }
+
+  private static void require(Dotenv dotenv, String key) {
+    String value = dotenv.get(key);
+    if (value == null || value.isBlank()) {
+      throw new IllegalStateException("Missing required env variable: " + key);
+    }
+    System.setProperty(key, value);
+  }
+
+  private static void optional(Dotenv dotenv, String key) {
+    String value = dotenv.get(key);
+    if (value != null && !value.isBlank()) {
+      System.setProperty(key, value);
+    }
   }
 }
