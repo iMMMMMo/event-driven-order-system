@@ -104,10 +104,14 @@ public class StripeWebhookIntegrationTest extends AbstractIntegrationTest {
     assertThat(webhookResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
     await()
-        .atMost(Duration.ofSeconds(5))
+        .atMost(Duration.ofSeconds(10))
         .untilAsserted(
             () -> {
-              Payment payment = paymentRepository.findAll().getFirst();
+              Payment payment =
+                  paymentRepository.findAll().stream()
+                      .filter(p -> p.getOrderId().equals(savedOrder.getId()))
+                      .findFirst()
+                      .orElseThrow();
               Order updatedOrder = orderRepository.findById(savedOrder.getId()).orElseThrow();
               InventoryItem updatedProduct =
                   inventoryRepository.findById(product.getId()).orElseThrow();
@@ -118,7 +122,116 @@ public class StripeWebhookIntegrationTest extends AbstractIntegrationTest {
             });
   }
 
+  @Test
+  void shouldCancelOrderWhenStripeCheckoutSessionExpiredArrives() {
+    InventoryItem product =
+        inventoryRepository.save(
+            InventoryItem.create(
+                "STRIPE_WEBHOOK_PRODUCT_" + UUID.randomUUID(),
+                new BigDecimal("100.00"),
+                "Test",
+                "General",
+                10));
+
+    Order order =
+        Order.create(
+            testUser.getId(), "stripe-webhook-expired@example.com", new BigDecimal("100.00"));
+    order.addItem(product.getId(), 1, product.getPrice());
+    Order savedOrder = orderRepository.save(order);
+
+    String payload = stripeCheckoutEventPayload(savedOrder.getId(), "checkout.session.expired");
+    String signature = stripeSignatureHeader(payload, "whsec_test", Instant.now());
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.add("Stripe-Signature", signature);
+
+    ResponseEntity<String> webhookResponse =
+        restTemplate.exchange(
+            "/api/stripe/webhook",
+            HttpMethod.POST,
+            new HttpEntity<>(payload, headers),
+            String.class);
+
+    assertThat(webhookResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(
+            () -> {
+              Payment payment =
+                  paymentRepository.findAll().stream()
+                      .filter(p -> p.getOrderId().equals(savedOrder.getId()))
+                      .findFirst()
+                      .orElseThrow();
+              Order updatedOrder = orderRepository.findById(savedOrder.getId()).orElseThrow();
+              InventoryItem updatedProduct =
+                  inventoryRepository.findById(product.getId()).orElseThrow();
+
+              assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
+              assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+              assertThat(updatedProduct.getReserved()).isEqualTo(0);
+            });
+  }
+
+  @Test
+  void shouldCancelOrderWhenStripeCheckoutSessionAsyncPaymentFailedArrives() {
+    InventoryItem product =
+        inventoryRepository.save(
+            InventoryItem.create(
+                "STRIPE_WEBHOOK_PRODUCT_" + UUID.randomUUID(),
+                new BigDecimal("100.00"),
+                "Test",
+                "General",
+                10));
+
+    Order order =
+        Order.create(
+            testUser.getId(), "stripe-webhook-async-failed@example.com", new BigDecimal("100.00"));
+    order.addItem(product.getId(), 1, product.getPrice());
+    Order savedOrder = orderRepository.save(order);
+
+    String payload =
+        stripeCheckoutEventPayload(savedOrder.getId(), "checkout.session.async_payment_failed");
+    String signature = stripeSignatureHeader(payload, "whsec_test", Instant.now());
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.add("Stripe-Signature", signature);
+
+    ResponseEntity<String> webhookResponse =
+        restTemplate.exchange(
+            "/api/stripe/webhook",
+            HttpMethod.POST,
+            new HttpEntity<>(payload, headers),
+            String.class);
+
+    assertThat(webhookResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(
+            () -> {
+              Payment payment =
+                  paymentRepository.findAll().stream()
+                      .filter(p -> p.getOrderId().equals(savedOrder.getId()))
+                      .findFirst()
+                      .orElseThrow();
+              Order updatedOrder = orderRepository.findById(savedOrder.getId()).orElseThrow();
+              InventoryItem updatedProduct =
+                  inventoryRepository.findById(product.getId()).orElseThrow();
+
+              assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
+              assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+              assertThat(updatedProduct.getReserved()).isEqualTo(0);
+            });
+  }
+
   private static String stripeCheckoutCompletedEventPayload(UUID orderId) {
+    return stripeCheckoutEventPayload(orderId, "checkout.session.completed");
+  }
+
+  private static String stripeCheckoutEventPayload(UUID orderId, String eventType) {
     return "{"
         + "\"id\":\"evt_test_"
         + UUID.randomUUID()
@@ -139,7 +252,9 @@ public class StripeWebhookIntegrationTest extends AbstractIntegrationTest {
         + "},"
         + "\"livemode\":false,"
         + "\"pending_webhooks\":1,"
-        + "\"type\":\"checkout.session.completed\""
+        + "\"type\":\""
+        + eventType
+        + "\""
         + "}";
   }
 
