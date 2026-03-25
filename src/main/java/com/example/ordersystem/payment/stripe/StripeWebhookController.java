@@ -21,7 +21,12 @@ public class StripeWebhookController {
 
   @PostMapping("/webhook")
   public ResponseEntity<Void> handleWebhook(
-      @RequestBody String payload, @RequestHeader("Stripe-Signature") String signatureHeader) {
+      @RequestBody String payload,
+      @RequestHeader(value = "Stripe-Signature", required = false) String signatureHeader) {
+
+    if (signatureHeader == null || signatureHeader.isBlank()) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
 
     try {
       stripeWebhookService.handle(payload, signatureHeader);
