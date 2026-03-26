@@ -12,7 +12,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
   List<Order> findByStatus(OrderStatus status);
 
-  Page<Order> findByCustomerEmailOrderByCreatedAtDesc(String customerEmail, Pageable pageable);
+  Page<Order> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
   Page<Order> findAllByOrderByCreatedAtDesc(Pageable pageable);
 }

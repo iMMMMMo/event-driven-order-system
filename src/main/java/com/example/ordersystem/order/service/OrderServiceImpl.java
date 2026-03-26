@@ -51,8 +51,13 @@ public class OrderServiceImpl implements OrderService {
   @Override
   @Transactional(Transactional.TxType.SUPPORTS)
   public Page<OrderResponse> getOrdersForUser(String email, Pageable pageable) {
+    User user =
+        userRepository
+            .findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
     return orderRepository
-        .findByCustomerEmailOrderByCreatedAtDesc(email, pageable)
+        .findByUserIdOrderByCreatedAtDesc(user.getId(), pageable)
         .map(orderMapper::toResponse);
   }
 
