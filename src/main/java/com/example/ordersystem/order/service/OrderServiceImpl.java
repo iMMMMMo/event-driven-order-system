@@ -189,7 +189,12 @@ public class OrderServiceImpl implements OrderService {
 
     order.markAsPaid();
 
-    eventPublisher.publish(new OrderPaidEvent(order.getId()));
+    List<OrderPaidEvent.Line> items =
+        order.getItems().stream()
+            .map(i -> new OrderPaidEvent.Line(i.getProductId(), i.getQuantity()))
+            .toList();
+
+    eventPublisher.publish(new OrderPaidEvent(order.getId(), items));
 
     return orderMapper.toResponse(order);
   }

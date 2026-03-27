@@ -92,7 +92,7 @@ public class OutboxPublisherJob {
           new OrderStripeCheckoutRequestedEvent(
               uuid(payload, "orderId"), decimal(payload, "amount"));
       case "com.example.ordersystem.order.event.OrderPaidEvent" ->
-          new OrderPaidEvent(uuid(payload, "orderId"));
+          new OrderPaidEvent(uuid(payload, "orderId"), orderPaidItems(payload));
       case "com.example.ordersystem.order.event.OrderCompletedEvent" ->
           new OrderCompletedEvent(uuid(payload, "orderId"));
       case "com.example.ordersystem.order.event.OrderCancelledEvent" ->
@@ -111,6 +111,23 @@ public class OutboxPublisherJob {
 
   private UUID uuid(JsonNode payload, String fieldName) {
     return UUID.fromString(text(payload, fieldName));
+  }
+
+  private List<OrderPaidEvent.Line> orderPaidItems(JsonNode payload) {
+    JsonNode itemsNode = payload.get("items");
+    if (itemsNode == null || itemsNode.isNull() || !itemsNode.isArray()) {
+      return List.of();
+    }
+
+    return java.util.stream.StreamSupport.stream(itemsNode.spliterator(), false)
+        .map(
+            item ->
+                new OrderPaidEvent.Line(
+                    uuid(item, "productId"),
+                    item.get("quantity") == null || item.get("quantity").isNull()
+                        ? 0
+                        : item.get("quantity").asInt()))
+        .toList();
   }
 
   private BigDecimal decimal(JsonNode payload, String fieldName) {
