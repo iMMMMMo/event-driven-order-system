@@ -5,15 +5,12 @@ import com.example.ordersystem.inventory.controller.dto.ProductResponse;
 import com.example.ordersystem.inventory.domain.InventoryItem;
 import com.example.ordersystem.inventory.event.InventoryReservedEvent;
 import com.example.ordersystem.inventory.repository.InventoryRepository;
-import com.example.ordersystem.inventory.repository.OrderItemLookupRepository;
-import com.example.ordersystem.inventory.repository.OrderItemLookupRepository.OrderItemRow;
 import com.example.ordersystem.shared.event.DomainEventPublisher;
 import com.example.ordersystem.shared.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -23,13 +20,11 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Transactional
-@Slf4j
 public class InventoryServiceImpl implements InventoryService {
 
   private static final String PRODUCT_BY_ID_CACHE = "productById";
 
   private final InventoryRepository inventoryRepository;
-  private final OrderItemLookupRepository orderItemLookupRepository;
   private final DomainEventPublisher eventPublisher;
 
   @Override
@@ -41,17 +36,7 @@ public class InventoryServiceImpl implements InventoryService {
   @Override
   @CacheEvict(value = PRODUCT_BY_ID_CACHE, allEntries = true)
   public void reserveForOrder(UUID orderId, List<ReservationLine> items) {
-
-    if (items == null || items.isEmpty()) {
-      log.info(
-          "OrderPaidEvent missing items; using fallback order_items lookup for orderId={}",
-          orderId);
-      for (OrderItemRow item : orderItemLookupRepository.findByOrderId(orderId)) {
-        reserve(item.productId(), item.quantity());
-      }
-      eventPublisher.publish(new InventoryReservedEvent(orderId));
-      return;
-    }
+    if (items == null || items.isEmpty()) return;
 
     for (ReservationLine item : items) {
       reserve(item.productId(), item.quantity());

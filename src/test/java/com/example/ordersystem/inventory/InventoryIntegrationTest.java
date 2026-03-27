@@ -17,6 +17,7 @@ import com.example.ordersystem.user.domain.User;
 import com.example.ordersystem.user.domain.UserRole;
 import com.example.ordersystem.user.repository.UserRepository;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,7 +61,8 @@ public class InventoryIntegrationTest extends AbstractIntegrationTest {
     order.addItem(product.getId(), 2, product.getPrice());
     Order savedOrder = orderRepository.save(order);
 
-    inventoryService.reserveForOrder(savedOrder.getId());
+    inventoryService.reserveForOrder(
+        savedOrder.getId(), List.of(new InventoryService.ReservationLine(product.getId(), 2)));
 
     InventoryItem item = inventoryRepository.findById(product.getId()).orElseThrow();
 
@@ -78,7 +80,7 @@ public class InventoryIntegrationTest extends AbstractIntegrationTest {
     Order order = Order.create(testUser.getId(), testUser.getEmail(), new BigDecimal("0.00"));
     Order savedOrder = orderRepository.save(order);
 
-    inventoryService.reserveForOrder(savedOrder.getId());
+    inventoryService.reserveForOrder(savedOrder.getId(), List.of());
 
     InventoryItem item = inventoryRepository.findById(product.getId()).orElseThrow();
     assertThat(item.getReserved()).isZero();
@@ -95,7 +97,11 @@ public class InventoryIntegrationTest extends AbstractIntegrationTest {
     order.addItem(product.getId(), 1, product.getPrice());
     Order savedOrder = orderRepository.save(order);
 
-    assertThatThrownBy(() -> inventoryService.reserveForOrder(savedOrder.getId()))
+    assertThatThrownBy(
+            () ->
+                inventoryService.reserveForOrder(
+                    savedOrder.getId(),
+                    List.of(new InventoryService.ReservationLine(product.getId(), 1))))
         .isInstanceOf(ConflictException.class)
         .hasMessage("Not enough stock");
   }
