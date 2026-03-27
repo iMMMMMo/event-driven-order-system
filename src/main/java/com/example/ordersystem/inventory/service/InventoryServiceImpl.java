@@ -10,8 +10,10 @@ import com.example.ordersystem.inventory.repository.OrderItemLookupRepository.Or
 import com.example.ordersystem.shared.event.DomainEventPublisher;
 import com.example.ordersystem.shared.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class InventoryServiceImpl implements InventoryService {
 
   private static final String PRODUCT_BY_ID_CACHE = "productById";
@@ -32,17 +35,38 @@ public class InventoryServiceImpl implements InventoryService {
   @Override
   @CacheEvict(value = PRODUCT_BY_ID_CACHE, allEntries = true)
   public void reserveForOrder(UUID orderId) {
+    reserveForOrder(orderId, List.of());
+  }
 
-    for (OrderItemRow item : orderItemLookupRepository.findByOrderId(orderId)) {
-      InventoryItem inventoryItem =
-          inventoryRepository
-              .findById(item.productId())
-              .orElseThrow(() -> new ResourceNotFoundException("Inventory item not found"));
+  @Override
+  @CacheEvict(value = PRODUCT_BY_ID_CACHE, allEntries = true)
+  public void reserveForOrder(UUID orderId, List<ReservationLine> items) {
 
-      inventoryItem.reserve(item.quantity());
+    if (items == null || items.isEmpty()) {
+      log.info(
+          "OrderPaidEvent missing items; using fallback order_items lookup for orderId={}",
+          orderId);
+      for (OrderItemRow item : orderItemLookupRepository.findByOrderId(orderId)) {
+        reserve(item.productId(), item.quantity());
+      }
+      eventPublisher.publish(new InventoryReservedEvent(orderId));
+      return;
+    }
+
+    for (ReservationLine item : items) {
+      reserve(item.productId(), item.quantity());
     }
 
     eventPublisher.publish(new InventoryReservedEvent(orderId));
+  }
+
+  private void reserve(UUID productId, int quantity) {
+    InventoryItem inventoryItem =
+        inventoryRepository
+            .findById(productId)
+            .orElseThrow(() -> new ResourceNotFoundException("Inventory item not found"));
+
+    inventoryItem.reserve(quantity);
   }
 
   @Override

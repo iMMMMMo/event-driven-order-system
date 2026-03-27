@@ -2,6 +2,7 @@ package com.example.ordersystem.inventory.event;
 
 import com.example.ordersystem.inventory.service.InventoryService;
 import com.example.ordersystem.order.event.OrderPaidEvent;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaHandler;
@@ -19,7 +20,11 @@ public class InventoryEventListener {
   @KafkaHandler
   public void handleOrderPaid(OrderPaidEvent event) {
     log.info("Received OrderPaidEvent from Kafka for OrderId: {}", event.getOrderId());
-    inventoryService.reserveForOrder(event.getOrderId());
+    List<InventoryService.ReservationLine> items =
+        event.getItems().stream()
+            .map(i -> new InventoryService.ReservationLine(i.productId(), i.quantity()))
+            .toList();
+    inventoryService.reserveForOrder(event.getOrderId(), items);
   }
 
   @KafkaHandler(isDefault = true)
