@@ -1,6 +1,6 @@
 package com.example.ordersystem.order.service;
 
-import com.example.ordersystem.order.controller.dto.OrderResponse;
+import com.example.ordersystem.order.api.dto.OrderResponse;
 import com.example.ordersystem.order.mapper.OrderMapper;
 import com.example.ordersystem.order.repository.OrderRepository;
 import com.example.ordersystem.shared.exception.ResourceNotFoundException;

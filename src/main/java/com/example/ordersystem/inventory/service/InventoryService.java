@@ -1,7 +1,7 @@
 package com.example.ordersystem.inventory.service;
 
-import com.example.ordersystem.inventory.controller.dto.CreateProductRequest;
-import com.example.ordersystem.inventory.controller.dto.ProductResponse;
+import com.example.ordersystem.inventory.api.dto.CreateProductRequest;
+import com.example.ordersystem.inventory.api.dto.ProductResponse;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;

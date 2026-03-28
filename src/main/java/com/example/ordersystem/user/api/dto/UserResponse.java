@@ -1,4 +1,4 @@
-package com.example.ordersystem.user.controller.dto;
+package com.example.ordersystem.user.api.dto;
 
 import com.example.ordersystem.user.domain.UserRole;
 

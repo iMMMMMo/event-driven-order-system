@@ -3,10 +3,10 @@ package com.example.ordersystem.user;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.ordersystem.config.AbstractIntegrationTest;
-import com.example.ordersystem.user.controller.dto.AuthResponse;
-import com.example.ordersystem.user.controller.dto.CreateUserRequest;
-import com.example.ordersystem.user.controller.dto.LoginUserRequest;
-import com.example.ordersystem.user.controller.dto.UserResponse;
+import com.example.ordersystem.user.api.dto.AuthResponse;
+import com.example.ordersystem.user.api.dto.CreateUserRequest;
+import com.example.ordersystem.user.api.dto.LoginUserRequest;
+import com.example.ordersystem.user.api.dto.UserResponse;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

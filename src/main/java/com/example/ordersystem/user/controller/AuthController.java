@@ -1,6 +1,6 @@
 package com.example.ordersystem.user.controller;
 
-import com.example.ordersystem.user.controller.dto.*;
+import com.example.ordersystem.user.api.dto.*;
 import com.example.ordersystem.user.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

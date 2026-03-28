@@ -1,7 +1,7 @@
 package com.example.ordersystem.user.service;
 
 import com.example.ordersystem.shared.security.JwtService;
-import com.example.ordersystem.user.controller.dto.*;
+import com.example.ordersystem.user.api.dto.*;
 import com.example.ordersystem.user.domain.User;
 import com.example.ordersystem.user.domain.UserRole;
 import com.example.ordersystem.user.repository.UserRepository;

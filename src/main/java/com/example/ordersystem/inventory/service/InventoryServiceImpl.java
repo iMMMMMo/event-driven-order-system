@@ -1,7 +1,7 @@
 package com.example.ordersystem.inventory.service;
 
-import com.example.ordersystem.inventory.controller.dto.CreateProductRequest;
-import com.example.ordersystem.inventory.controller.dto.ProductResponse;
+import com.example.ordersystem.inventory.api.dto.CreateProductRequest;
+import com.example.ordersystem.inventory.api.dto.ProductResponse;
 import com.example.ordersystem.inventory.domain.InventoryItem;
 import com.example.ordersystem.inventory.event.InventoryReservedEvent;
 import com.example.ordersystem.inventory.repository.InventoryRepository;

@@ -1,7 +1,7 @@
 package com.example.ordersystem.inventory.controller;
 
-import com.example.ordersystem.inventory.controller.dto.CreateProductRequest;
-import com.example.ordersystem.inventory.controller.dto.ProductResponse;
+import com.example.ordersystem.inventory.api.dto.CreateProductRequest;
+import com.example.ordersystem.inventory.api.dto.ProductResponse;
 import com.example.ordersystem.inventory.service.InventoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,4 +1,4 @@
-package com.example.ordersystem.inventory.controller.dto;
+package com.example.ordersystem.inventory.api.dto;
 
 import java.math.BigDecimal;
 import java.util.UUID;

@@ -1,9 +1,9 @@
 package com.example.ordersystem.order.controller;
 
-import com.example.ordersystem.order.controller.dto.CreateOrderRequest;
-import com.example.ordersystem.order.controller.dto.OrderResponse;
-import com.example.ordersystem.order.controller.dto.StripePaymentRequestResponse;
-import com.example.ordersystem.order.controller.dto.StripePaymentStatusResponse;
+import com.example.ordersystem.order.api.dto.CreateOrderRequest;
+import com.example.ordersystem.order.api.dto.OrderResponse;
+import com.example.ordersystem.order.api.dto.StripePaymentRequestResponse;
+import com.example.ordersystem.order.api.dto.StripePaymentStatusResponse;
 import com.example.ordersystem.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
