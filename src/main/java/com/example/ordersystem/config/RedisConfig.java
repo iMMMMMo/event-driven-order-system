@@ -3,6 +3,7 @@ package com.example.ordersystem.config;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Duration;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -13,6 +14,7 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
+@EnableCaching
 public class RedisConfig {
 
   @Bean
@@ -35,13 +37,6 @@ public class RedisConfig {
             .entryTtl(Duration.ofMinutes(10))
             .disableCachingNullValues();
 
-    RedisCacheConfiguration ordersConfig = defaultConfig.entryTtl(Duration.ofMinutes(10));
-    RedisCacheConfiguration productByIdConfig = defaultConfig.entryTtl(Duration.ofMinutes(5));
-
-    return RedisCacheManager.builder(connectionFactory)
-        .cacheDefaults(defaultConfig)
-        .withCacheConfiguration("orders", ordersConfig)
-        .withCacheConfiguration("productById", productByIdConfig)
-        .build();
+    return RedisCacheManager.builder(connectionFactory).cacheDefaults(defaultConfig).build();
   }
 }
